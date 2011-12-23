@@ -6,21 +6,28 @@ CILKPP	= cilk++
 LIBARG	=
 # uncomment the following line to build with Cilkscreen metadata.
 # LIBARG	= -fcilkscreen -g
-TARGET	= apsp
+TARGET	= apsp_fmm
 SRC	= $(addsuffix .cilk,$(TARGET))
 
-GCCOPT = -O2 
-INTELOPT = -O2
+GCCOPT = -g -O2
+INTELOPT = -g -O2
 DEB = -g -pg
+
+all: apsp_fmm 
 
 serial: apsp_cpp.cpp
 	g++ $(INCADD) $(GCCOPT) -o apspserial apsp_cpp.cpp -lpthread
 
-all: $(TARGET)
 
-$(TARGET): $(SRC)
-	$(CILKPP) $(INCADD) $(SRC) $(LIBARG) -o $@
+#$(TARGET): $(SRC)
+#	$(CILKPP) $(INCADD) $(SRC) $(LIBARG) -o $@
+
+apsp_fmm: apsp_fmm.cpp fmm_naive.o
+	g++ $(INCADD) $(GCCOPT) ../fmm/fmm_naive.o -o apspfmm apsp_fmm.cpp -lpthread
+
+fmm_naive.o:
+	cd ../fmm/; make fmm_naive.o; cd ../apsp/;
 
 clean:
 	rm -f $(TARGET)
-	rm -f apspserial
+	rm -f apspserial apspfmm

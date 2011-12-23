@@ -56,7 +56,7 @@ char* getCmdOption(char ** begin,
 int main(int argc, char ** argv){
   int seed, n, m, k;
   char trans_A, trans_B;
-  char lda_A, lda_B, lda_C;
+  int lda_A, lda_B, lda_C;
   
   int const in_num = argc;
   char ** input_str = argv;

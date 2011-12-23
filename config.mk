@@ -1,5 +1,5 @@
 CC	= g++
-CFLAGS  = -g -O2 $(DFLAGS)
+CFLAGS  = -g -O0 $(DFLAGS)
 #LIBS    = -lblas -llapack
 #CC     = mpicxx
 
