@@ -17,8 +17,8 @@ void test_fmm(int const		seed,
 	      int const		lda_A, 
 	      int const		lda_B, 
 	      int const		lda_C){
-  REAL *A,*B,*C;
-  int sz_A, sz_B, sz_C;
+  REAL *A,*B,*C,*ans_C;
+  int sz_A, sz_B, sz_C, i, j, pass;
 
   if (trans_A == 'N') sz_A = lda_A*k;
   else sz_A = lda_A*m;
@@ -29,16 +29,40 @@ void test_fmm(int const		seed,
   A = (REAL*)malloc(sizeof(REAL)*sz_A);
   B = (REAL*)malloc(sizeof(REAL)*sz_B);
   C = (REAL*)malloc(sizeof(REAL)*sz_C);
+  ans_C = (REAL*)malloc(sizeof(REAL)*sz_C);
 
   std::fill(A, A+sz_A, 1.0);
   std::fill(B, B+sz_B, 1.0);
   std::fill(C, C+sz_C, 100.0);
+  std::fill(ans_C, ans_C+sz_C, 100.0);
 
   fmm_naive(trans_A, trans_B,
 	    m, n, k,
 	    A, lda_A,
 	    B, lda_B,
+	    ans_C, lda_C);
+  
+  fmm_opt  (trans_A, trans_B,
+	    m, n, k,
+	    A, lda_A,
+	    B, lda_B,
 	    C, lda_C);
+
+  pass = 1;
+  for (i=0; i<n; i++){
+    for (j=0; j<m; j++){
+      if (fabs(C[i*lda_A+j] - ans_C[i*lda_A+j]) > 1.E-6){
+	printf("opt_C[%d,%d] = %f, naive_C[%d,%d] = %f\n",
+		C[i*lda_A+j], ans_C[i*lda_A+j]);
+	pass = 0;
+	printf("Optimized fmm incorrect!\n");
+	return;
+      }
+    }
+  }
+  if (pass)
+   printf("Optimized fmm correct.\n");
+  return;
 
 }
 

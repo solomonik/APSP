@@ -33,4 +33,12 @@ void fmm_naive( const char trans_A,	const char trans_B,
 		      REAL * C,		const int lda_C,
 		const int * pred_A = 0,	int * pred_C = 0,	const int lda_P=1);
 
+void fmm_opt( 	const char trans_A,	const char trans_B,
+		const int m,		const int n,		const int k,		
+		const REAL * A,		const int lda_A,
+		const REAL * B,		const int lda_B,
+		      REAL * C,		const int lda_C,
+		const int * pred_A = 0,	int * pred_C = 0,	const int lda_P=1);
+
+
 #endif
