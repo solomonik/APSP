@@ -51,9 +51,16 @@ void test_fmm(int const		seed,
   pass = 1;
   for (i=0; i<n; i++){
     for (j=0; j<m; j++){
-      if (fabs(C[i*lda_A+j] - ans_C[i*lda_A+j]) > 1.E-6){
+      if (fabs(C[i*lda_C+j] - ans_C[i*lda_C+j]) > 1.E-6){
+#if (PRECISION==1)
 	printf("opt_C[%d,%d] = %f, naive_C[%d,%d] = %f\n",
-		C[i*lda_A+j], ans_C[i*lda_A+j]);
+		i,j,C[i*lda_C+j],
+		i,j,ans_C[i*lda_C+j]);
+#else
+	printf("opt_C[%d,%d] = %lf, naive_C[%d,%d] = %lf\n",
+		i,j,C[i*lda_C+j],
+		i,j,ans_C[i*lda_C+j]);
+#endif
 	pass = 0;
 	printf("Optimized fmm incorrect!\n");
 	return;
@@ -106,11 +113,11 @@ int main(int argc, char ** argv){
   } else k = 64;
   if (getCmdOption(input_str, input_str+in_num, "-trans_A")){
     trans_A = *getCmdOption(input_str, input_str+in_num, "-trans_A");
-    if (trans_A != 'N' || trans_A != 'T') trans_A = 'N';
+    if (trans_A != 'N' && trans_A != 'T') trans_A = 'N';
   } else trans_A = 'N';
   if (getCmdOption(input_str, input_str+in_num, "-trans_B")){
     trans_B = *getCmdOption(input_str, input_str+in_num, "-trans_B");
-    if (trans_B != 'N' || trans_B != 'T') trans_B = 'N';
+    if (trans_B != 'N' && trans_B != 'T') trans_B = 'N';
   } else trans_B = 'N';
   if (getCmdOption(input_str, input_str+in_num, "-lda_A")){
     lda_A = atoi(getCmdOption(input_str, input_str+in_num, "-lda_A"));

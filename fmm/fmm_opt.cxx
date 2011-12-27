@@ -5,6 +5,8 @@
 #include <xmmintrin.h>
 #include <algorithm>
 #include <math.h>
+#include <limits.h>
+#include <float.h>
 
 #include "fmm.h"
 
@@ -36,75 +38,97 @@
 
 
 #ifndef RBN
-#define RBN 1
+#define RBN 4
 #endif
 
 #ifndef RBK
-#define RBK 2
+#define RBK 4
 #endif
 
 #ifndef RBM
-#define RBM 2
+#define RBM 4
 #endif
 
 //#define min(a,b) (((a)<(b))?(a):(b))
 //#define max(a,b) (((a)>(b))?(a):(b))
 
 
+
+#if (PRECISION==1)
+#define MAX_VAL		FLT_MAX
+#define LOAD		_mm_load_ps
+#define OUTER_OP	_mm_min_ps
+#define INNER_OP	_mm_add_ps
+#define SET_INIT()	_mm_set1_ps(MAX_VAL)
+#define __m128t		__m128
+#define SWIDTH		4
+#endif
+
+#if (PRECISION==2)
+#define MAX_VAL		DBL_MAX
+#define LOAD		_mm_load_pd
+#define OUTER_OP	_mm_min_pd
+#define INNER_OP	_mm_add_pd
+#define SET_INIT()	_mm_set1_pd(MAX_VAL)
+#define __m128t		__m128d
+#define SWIDTH		2
+#endif
+
+
 #if (RBK==2)
   #define INIT_ROW_A(ib) \
-    __m128d A_##ib##_0; 
+    __m128t A_##ib##_0; 
   #define INIT_ROW_B(jb) \
-    __m128d B_##jb##_0; 
+    __m128t B_##jb##_0; 
   #define LOAD_ROW_A(ib) \
-    A_##ib##_0 = _mm_load_pd(A+k+0+(i+(ib))*ldk);
+    A_##ib##_0 = LOAD(A+k+0+(i+(ib))*ldk);
   #define LOAD_ROW_B(jb) \
-    B_##jb##_0 = _mm_load_pd(B+k+0+(j+(jb))*ldk);
+    B_##jb##_0 = LOAD(B+k+0+(j+(jb))*ldk);
   #define MUL_ROW_A_B(ib, jb) \
-    C_##jb##_##ib = _mm_add_pd(C_##jb##_##ib,_mm_mul_pd(A_##ib##_0,B_##jb##_0)); 
+    C_##jb##_##ib = OUTER_OP(C_##jb##_##ib,INNER_OP(A_##ib##_0,B_##jb##_0)); 
 #endif
 
 #if (RBK==4)
   #define INIT_ROW_A(ib) \
-    __m128d A_##ib##_0; \
-    __m128d A_##ib##_1; 
+    __m128t A_##ib##_0; \
+    __m128t A_##ib##_1; 
   #define INIT_ROW_B(jb) \
-    __m128d B_##jb##_0; \
-    __m128d B_##jb##_1; 
+    __m128t B_##jb##_0; \
+    __m128t B_##jb##_1; 
   #define LOAD_ROW_A(ib) \
-    A_##ib##_0 = ((__m128d *)(A+k+0+(i+(ib))*ldk))[0]; \
-    A_##ib##_1 = ((__m128d *)(A+k+2+(i+(ib))*ldk))[0];
+    A_##ib##_0 = ((__m128t *)(A+k+0*SWIDTH+(i+(ib))*ldk))[0]; \
+    A_##ib##_1 = ((__m128t *)(A+k+1*SWIDTH+(i+(ib))*ldk))[0];
   #define LOAD_ROW_B(jb) \
-    B_##jb##_0 = ((__m128d *)(B+k+0+(j+(jb))*ldk))[0]; \
-    B_##jb##_1 = ((__m128d *)(B+k+2+(j+(jb))*ldk))[0];
+    B_##jb##_0 = ((__m128t *)(B+k+0*SWIDTH+(j+(jb))*ldk))[0]; \
+    B_##jb##_1 = ((__m128t *)(B+k+1*SWIDTH+(j+(jb))*ldk))[0];
   #define MUL_ROW_A_B(ib, jb) \
-    C_##jb##_##ib = _mm_add_pd(C_##jb##_##ib, _mm_mul_pd(A_##ib##_0,B_##jb##_0)); \
-    C_##jb##_##ib = _mm_add_pd(C_##jb##_##ib, _mm_mul_pd(A_##ib##_1,B_##jb##_1));
+    C_##jb##_##ib = OUTER_OP(C_##jb##_##ib, INNER_OP(A_##ib##_0,B_##jb##_0)); \
+    C_##jb##_##ib = OUTER_OP(C_##jb##_##ib, INNER_OP(A_##ib##_1,B_##jb##_1));
 #endif    
 
 #if (RBK==8)
   #define INIT_ROW_A(ib) \
-    __m128d A_##ib##_0; __m128d A_##ib##_1; \
-    __m128d A_##ib##_2; __m128d A_##ib##_3; 
+    __m128t A_##ib##_0; __m128t A_##ib##_1; \
+    __m128t A_##ib##_2; __m128t A_##ib##_3; 
   #define INIT_ROW_B(jb) \
-    __m128d B_##jb##_0; __m128d B_##jb##_1; \
-    __m128d B_##jb##_2; __m128d B_##jb##_3; 
+    __m128t B_##jb##_0; __m128t B_##jb##_1; \
+    __m128t B_##jb##_2; __m128t B_##jb##_3; 
   #define LOAD_ROW_A(ib) \
-    A_##ib##_0 = ((__m128d *)(A+k+0+(i+(ib))*ldk))[0]; \
-    A_##ib##_1 = ((__m128d *)(A+k+2+(i+(ib))*ldk))[0]; \
-    A_##ib##_2 = ((__m128d *)(A+k+4+(i+(ib))*ldk))[0]; \
-    A_##ib##_3 = ((__m128d *)(A+k+6+(i+(ib))*ldk))[0];
+    A_##ib##_0 = ((__m128t *)(A+k+0*SWIDTH+(i+(ib))*ldk))[0]; \
+    A_##ib##_1 = ((__m128t *)(A+k+1*SWIDTH+(i+(ib))*ldk))[0]; \
+    A_##ib##_2 = ((__m128t *)(A+k+2*SWIDTH+(i+(ib))*ldk))[0]; \
+    A_##ib##_3 = ((__m128t *)(A+k+3*SWIDTH+(i+(ib))*ldk))[0];
   #define LOAD_ROW_B(jb) \
-    B_##jb##_0 = ((__m128d *)(B+k+0+(j+(jb))*ldk))[0]; \
-    B_##jb##_1 = ((__m128d *)(B+k+2+(j+(jb))*ldk))[0]; \
-    B_##jb##_2 = ((__m128d *)(B+k+4+(j+(jb))*ldk))[0]; \
-    B_##jb##_3 = ((__m128d *)(B+k+6+(j+(jb))*ldk))[0];
+    B_##jb##_0 = ((__m128t *)(B+k+0*SWIDTH+(j+(jb))*ldk))[0]; \
+    B_##jb##_1 = ((__m128t *)(B+k+1*SWIDTH+(j+(jb))*ldk))[0]; \
+    B_##jb##_2 = ((__m128t *)(B+k+2*SWIDTH+(j+(jb))*ldk))[0]; \
+    B_##jb##_3 = ((__m128t *)(B+k+3*SWIDTH+(j+(jb))*ldk))[0];
 
   #define MUL_ROW_A_B(ib, jb) \
-    C_##jb##_##ib = _mm_add_pd(C_##jb##_##ib, _mm_mul_pd(A_##ib##_0,B_##jb##_0)); \
-    C_##jb##_##ib = _mm_add_pd(C_##jb##_##ib, _mm_mul_pd(A_##ib##_1,B_##jb##_1)); \
-    C_##jb##_##ib = _mm_add_pd(C_##jb##_##ib, _mm_mul_pd(A_##ib##_2,B_##jb##_2)); \
-    C_##jb##_##ib = _mm_add_pd(C_##jb##_##ib, _mm_mul_pd(A_##ib##_3,B_##jb##_3));
+    C_##jb##_##ib = OUTER_OP(C_##jb##_##ib, INNER_OP(A_##ib##_0,B_##jb##_0)); \
+    C_##jb##_##ib = OUTER_OP(C_##jb##_##ib, INNER_OP(A_##ib##_1,B_##jb##_1)); \
+    C_##jb##_##ib = OUTER_OP(C_##jb##_##ib, INNER_OP(A_##ib##_2,B_##jb##_2)); \
+    C_##jb##_##ib = OUTER_OP(C_##jb##_##ib, INNER_OP(A_##ib##_3,B_##jb##_3));
 #endif    
 
 
@@ -114,17 +138,34 @@
   #define LOAD_B \
     LOAD_ROW_B(0)
   
-  #define INIT_ROW_C(ib) \
-    __m128d C_0_##ib; \
-    double C1_0_##ib; \
-    double C2_0_##ib; 
+
   #define LOAD_ROW_C(ib) \
-    C_0_##ib = _mm_setzero_pd();
-       
+    C_0_##ib = SET_INIT();
+      
+#if (PRECISION==1) 
+  #define INIT_ROW_C(ib) \
+    __m128t C_0_##ib, Cs_0_##ib, Ct_0_##ib; \
+    __m64 Cq_0_##ib;
+
+  #define STORE_ROW_C(ib) \
+    Cs_0_##ib = _mm_shuffle_ps(C_0_##ib,C_0_##ib,_MM_SHUFFLE(1,0,3,2));\
+    Cs_0_##ib = OUTER_OP(C_0_##ib,Cs_0_##ib); \
+    Ct_0_##ib = _mm_shuffle_ps(Cs_0_##ib,Cs_0_##ib,_MM_SHUFFLE(2,3,0,1));\
+    Cs_0_##ib = OUTER_OP(Cs_0_##ib,Ct_0_##ib); \
+    _mm_storel_pi(&Cq_0_##ib,Cs_0_##ib);\
+    _mm_storel_pi(&C[j+0+(i+(ib))*ldn],Cq_0_##ib);
+
+#endif
+#if (PRECISION==2) 
+  #define INIT_ROW_C(ib) \
+    __m128t C_0_##ib; \
+    REAL C1_0_##ib; \
+    REAL C2_0_##ib; 
   #define STORE_ROW_C(ib) \
     _mm_storeh_pd(&C1_0_##ib,C_0_##ib);\
     _mm_storel_pd(&C2_0_##ib,C_0_##ib);\
-    C[j+0+(i+(ib))*ldn] += C1_0_##ib + C2_0_##ib;
+    C[j+0+(i+(ib))*ldn] = MIN(C[j+0+(i+(ib))*ldn], MIN(C1_0_##ib, C2_0_##ib));
+#endif
 
   #define MUL_SQUARE_A_B(ib) \
     MUL_ROW_A_B(ib, 0)
@@ -136,20 +177,41 @@
   #define LOAD_B \
     LOAD_ROW_B(0) LOAD_ROW_B(1) 
   
-  #define INIT_ROW_C(ib) \
-    __m128d C_0_##ib; __m128d C_1_##ib; \
-    __m128d C_swap_##ib; 
   #define LOAD_ROW_C(ib) \
-    C_0_##ib = _mm_setzero_pd(); \
-    C_1_##ib = _mm_setzero_pd();
-
+    C_0_##ib = SET_INIT(); \
+    C_1_##ib = SET_INIT();
+  
+#if (PRECISION==1)
+  #define INIT_ROW_C(ib) \
+    __m128t C_0_##ib; __m128t C_1_##ib; \
+    __m128t C_swap_##ib; \
+    __m64 Cm_0_##ib;
+  
+  #define STORE_ROW_C(ib) \
+    C_swap_##ib = _mm_unpacklo_ps(C_0_##ib, C_1_##ib); \
+    C_0_##ib = _mm_unpackhi_ps(C_0_##ib, C_1_##ib); \
+    C_1_##ib = OUTER_OP(C_0_##ib, C_swap_##ib); \
+    C_0_##ib = _mm_shuffle_ps(C_1_##ib,C_1_##ib,_MM_SHUFFLE(3,2,1,0));\
+    C_1_##ib = OUTER_OP(C_0_##ib, C_1_##ib); \
+    C_0_##ib = _mm_shuffle_ps(C_1_##ib,C_1_##ib,_MM_SHUFFLE(0,2,1,3));\
+    C_1_##ib = LOAD(C+j+0+(i+(ib))*ldn); \
+    C_1_##ib = OUTER_OP(C_1_##ib,C_0_##ib); \
+    C_1_##ib = OUTER_OP(C_1_##ib,C_swap_##ib); \
+    _mm_store_pd(C+j+0+(i+(ib))*ldn, C_1_##ib); 
+#endif
+ 
+#if (PRECISION==2) 
+  #define INIT_ROW_C(ib) \
+    __m128t C_0_##ib; __m128t C_1_##ib; \
+    __m128t C_swap_##ib; 
   #define STORE_ROW_C(ib) \
     C_swap_##ib = _mm_unpacklo_pd(C_0_##ib, C_1_##ib); \
     C_0_##ib = _mm_unpackhi_pd(C_0_##ib, C_1_##ib); \
-    C_1_##ib = _mm_load_pd(C+j+0+(i+(ib))*ldn); \
-    C_1_##ib = _mm_add_pd(C_1_##ib,C_0_##ib); \
-    C_1_##ib = _mm_add_pd(C_1_##ib,C_swap_##ib); \
+    C_1_##ib = LOAD(C+j+0+(i+(ib))*ldn); \
+    C_1_##ib = OUTER_OP(C_1_##ib,C_0_##ib); \
+    C_1_##ib = OUTER_OP(C_1_##ib,C_swap_##ib); \
     _mm_store_pd(C+j+0+(i+(ib))*ldn, C_1_##ib); 
+#endif
 
   #define MUL_SQUARE_A_B(ib) \
     MUL_ROW_A_B(ib, 0) MUL_ROW_A_B(ib, 1)
@@ -164,29 +226,49 @@
     LOAD_ROW_B(2) LOAD_ROW_B(3) 
   
   #define INIT_ROW_C(ib) \
-    __m128d C_0_##ib; __m128d C_1_##ib; \
-    __m128d C_swap_0_##ib; \
-    __m128d C_2_##ib; __m128d C_3_##ib; \
-    __m128d C_swap_1_##ib; 
+    __m128t C_0_##ib; __m128t C_1_##ib; \
+    __m128t C_swap_0_##ib; \
+    __m128t C_2_##ib; __m128t C_3_##ib; \
+    __m128t C_swap_1_##ib; 
   #define LOAD_ROW_C(ib) \
-    C_0_##ib = _mm_setzero_pd(); \
-    C_1_##ib = _mm_setzero_pd(); \
-    C_2_##ib = _mm_setzero_pd(); \
-    C_3_##ib = _mm_setzero_pd();
+    C_0_##ib = SET_INIT(); \
+    C_1_##ib = SET_INIT(); \
+    C_2_##ib = SET_INIT(); \
+    C_3_##ib = SET_INIT();
 
+#if (PRECISION==1)
+  #define STORE_ROW_C(ib) \
+    C_swap_0_##ib = _mm_unpacklo_ps(C_0_##ib, C_2_##ib); \
+    C_0_##ib = _mm_unpackhi_ps(C_0_##ib, C_2_##ib); \
+    C_2_##ib = OUTER_OP(C_0_##ib, C_swap_0_##ib); \
+    C_swap_0_##ib = _mm_shuffle_ps(C_2_##ib,C_2_##ib,_MM_SHUFFLE(1,0,3,2));\
+    C_0_##ib = OUTER_OP(C_swap_0_##ib, C_2_##ib); \
+    C_swap_1_##ib = _mm_unpacklo_ps(C_1_##ib, C_3_##ib); \
+    C_1_##ib = _mm_unpackhi_ps(C_1_##ib, C_3_##ib); \
+    C_3_##ib = OUTER_OP(C_1_##ib, C_swap_1_##ib); \
+    C_swap_1_##ib = _mm_shuffle_ps(C_3_##ib,C_3_##ib,_MM_SHUFFLE(1,0,3,2));\
+    C_1_##ib = OUTER_OP(C_swap_1_##ib, C_3_##ib); \
+    C_2_##ib = LOAD(C+j+0+(i+(ib))*ldn); \
+    C_3_##ib = _mm_unpacklo_ps(C_0_##ib, C_1_##ib); \
+    C_1_##ib = OUTER_OP(C_3_##ib,C_2_##ib); \
+    _mm_store_ps(C+j+0+(i+(ib))*ldn, C_1_##ib); 
+#endif
+
+#if (PRECISION==2)
   #define STORE_ROW_C(ib) \
     C_swap_0_##ib = _mm_unpacklo_pd(C_0_##ib, C_1_##ib); \
     C_0_##ib = _mm_unpackhi_pd(C_0_##ib, C_1_##ib); \
-    C_1_##ib = _mm_load_pd(C+j+0+(i+(ib))*ldn); \
-    C_1_##ib = _mm_add_pd(C_1_##ib,C_0_##ib); \
-    C_1_##ib = _mm_add_pd(C_1_##ib,C_swap_0_##ib); \
+    C_1_##ib = LOAD(C+j+0+(i+(ib))*ldn); \
+    C_1_##ib = OUTER_OP(C_1_##ib,C_0_##ib); \
+    C_1_##ib = OUTER_OP(C_1_##ib,C_swap_0_##ib); \
     _mm_store_pd(C+j+0+(i+(ib))*ldn, C_1_##ib); \
     C_swap_1_##ib = _mm_unpacklo_pd(C_2_##ib, C_3_##ib); \
     C_2_##ib = _mm_unpackhi_pd(C_2_##ib, C_3_##ib); \
-    C_3_##ib = _mm_load_pd(C+j+2+(i+(ib))*ldn); \
-    C_3_##ib = _mm_add_pd(C_3_##ib,C_2_##ib); \
-    C_3_##ib = _mm_add_pd(C_3_##ib,C_swap_1_##ib); \
+    C_3_##ib = LOAD(C+j+2+(i+(ib))*ldn); \
+    C_3_##ib = OUTER_OP(C_3_##ib,C_2_##ib); \
+    C_3_##ib = OUTER_OP(C_3_##ib,C_swap_1_##ib); \
     _mm_store_pd(C+j+2+(i+(ib))*ldn, C_3_##ib); 
+#endif
 
 
   #define MUL_SQUARE_A_B(ib) \
@@ -266,9 +348,9 @@ inline static void do_block(int const ldm,
 			    int const M, 
 			    int const N, 
 			    int const K, 
-			    double const *A, 
-			    double const *B,
-			    double *  C,
+			    REAL const *A, 
+			    REAL const *B,
+			    REAL *  C,
 			    int const full_KN){
 
   int const mm = (M/RBM + (M%RBM > 0))*RBM;
@@ -343,8 +425,11 @@ void fmm_opt( 	const char trans_A,	const char trans_B,
     npad = (npad/RBN)*RBN + RBN;
   if (kpad % RBK != 0)
     kpad = (kpad/RBK)*RBK + RBK;
-  if (kpad % CACHE_HOP_SIZE == 0)
-    kpad = kpad + MAX(MAX(RBN,RBK),RBM);
+/*  if (kpad % CACHE_HOP_SIZE == 0)
+    kpad = kpad + MAX(MAX(RBN,RBK),RBM);*/
+  /*printf("mpad = %d\n",mpad);
+  printf("npad = %d\n",npad);
+  printf("kpad = %d\n",kpad);*/
 
   if(true) {
     REAL pad_A[mpad*kpad] __attribute__ ((aligned(16)));
@@ -414,14 +499,14 @@ void fmm_opt( 	const char trans_A,	const char trans_B,
 		  int N = MIN( BLOCK_SIZE_N, npad-j );
 		  int K = MIN( BLOCK_SIZE_K, kpad-k );
 
-		  fmm_naive('T', 'N', M, N, K, 
+/*		  fmm_naive('T', 'N', M, N, K, 
 			    A_swap+k+i*kpad, kpad,
 			    B_swap+k+j*kpad, kpad,
-			    pad_C+i+j*mpad, mpad);
+			    pad_C+i+j*mpad, mpad);*/
 		  
-		/*  do_block(mpad, npad, kpad, M, N, K, 
+		  do_block(mpad, npad, kpad, M, N, K, 
 			   A_swap+k+i*kpad, B_swap+k+j*kpad, pad_C+j+i*npad, 
-			   2*(K==BLOCK_SIZE_K)+(N==BLOCK_SIZE_N));*/
+			   2*(K==BLOCK_SIZE_K)+(N==BLOCK_SIZE_N));
 
 		}
 	      }
@@ -432,17 +517,14 @@ void fmm_opt( 	const char trans_A,	const char trans_B,
     }
     {
       //REAL A_swap[lda*lda];
-#if 0
-      REAL C_swap[npad*kpad] __attribute__ ((aligned(16)));
+      REAL C_swap[npad*mpad] __attribute__ ((aligned(16)));
       blk_transp(pad_C, C_swap, mpad, npad);
       for (int i = 0; i<n; i++){
 	memcpy(C+i*lda_C,C_swap+i*mpad, m*sizeof(REAL));
       }
-#else
-      for (int i=0; i<n; i++){
+/*      for (int i=0; i<n; i++){
 	memcpy(C+i*lda_C,pad_C+i*mpad, m*sizeof(REAL));
-      }
-#endif
+      }*/
     }
   } else {
 #if 0

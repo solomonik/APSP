@@ -3,8 +3,16 @@
 
 #include <limits>
 
-#ifndef REAL
+#ifndef PRECISION
+#define PRECISION 2
+#endif
+
+#if (PRECISION==1)
 typedef float REAL;
+#endif
+
+#if (PRECISION==2)
+typedef double REAL;
 #endif
 
 #ifndef MIN
