@@ -58,7 +58,7 @@
 #define MAX_VAL		FLT_MAX
 #define LOAD		_mm_load_ps
 #define OUTER_OP	_mm_min_ps
-#define INNER_OP	_mm_add_ps
+#define INNER_OP(a,b)	_mm_max_ps(b,_mm_max_ps(a,_mm_add_ps(a,b)))
 #define SET_INIT()	_mm_set1_ps(MAX_VAL)
 #define __m128t		__m128
 #define SWIDTH		4
@@ -68,7 +68,8 @@
 #define MAX_VAL		DBL_MAX
 #define LOAD		_mm_load_pd
 #define OUTER_OP	_mm_min_pd
-#define INNER_OP	_mm_add_pd
+//#define INNER_OP(a,b)	_mm_max_pd(b,_mm_max_pd(a,_mm_add_pd(a,b)))
+#define INNER_OP(a,b)	_mm_add_pd(a,b)
 #define SET_INIT()	_mm_set1_pd(MAX_VAL)
 #define __m128t		__m128d
 #define SWIDTH		2
@@ -478,14 +479,24 @@ void fmm_opt( 	const char trans_A,	const char trans_B,
     }
     {
       REAL A_swap[kpad*mpad] __attribute__ ((aligned(16)));
+      if (trans_A == 'n' || trans_A == 'N'){ 
+	blk_transp(pad_A, A_swap, kpad, mpad);
+	memcpy(pad_A, A_swap, mpad*kpad*sizeof(REAL));
+      }
+    }
+    {
       REAL B_swap[npad*kpad] __attribute__ ((aligned(16)));
-      
-      if (trans_A == 'n' || trans_A == 'N') blk_transp(pad_A, A_swap, kpad, mpad);
-      else memcpy(A_swap, pad_A, kpad*mpad*sizeof(REAL));
-
-      if (trans_B == 't' || trans_B == 'T') blk_transp(pad_B, B_swap, kpad, npad);
-      else memcpy(B_swap, pad_B, npad*kpad*sizeof(REAL));
-
+      if (trans_B == 't' || trans_B == 'T'){
+	blk_transp(pad_B, B_swap, kpad, npad);
+	memcpy(pad_B, B_swap, npad*kpad*sizeof(REAL));
+      }
+    }
+    {
+      REAL C_swap[npad*mpad] __attribute__ ((aligned(16)));
+      blk_transp(pad_C, C_swap, npad, mpad);
+      memcpy(pad_C, C_swap, npad*mpad*sizeof(REAL));
+    }
+    {
       //  pad_A = A_swap;
       /*For each block combination*/
       for( int i2 = 0; i2 < mpad; i2 += L2M ) {
@@ -500,12 +511,12 @@ void fmm_opt( 	const char trans_A,	const char trans_B,
 		  int K = MIN( BLOCK_SIZE_K, kpad-k );
 
 /*		  fmm_naive('T', 'N', M, N, K, 
-			    A_swap+k+i*kpad, kpad,
-			    B_swap+k+j*kpad, kpad,
+			    pad_A+k+i*kpad, kpad,
+			    pad_B+k+j*kpad, kpad,
 			    pad_C+i+j*mpad, mpad);*/
 		  
 		  do_block(mpad, npad, kpad, M, N, K, 
-			   A_swap+k+i*kpad, B_swap+k+j*kpad, pad_C+j+i*npad, 
+			   pad_A+k+i*kpad, pad_B+k+j*kpad, pad_C+j+i*npad, 
 			   2*(K==BLOCK_SIZE_K)+(N==BLOCK_SIZE_N));
 
 		}

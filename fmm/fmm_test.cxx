@@ -7,6 +7,63 @@
 #include <assert.h>
  
 #include "fmm.h"
+
+void bench_fmm(int const		seed, 
+	       int const		n, 
+	       int const		m, 
+	       int const		k, 
+	       char const		trans_A,
+	       char const		trans_B, 
+	       int const		lda_A, 
+	       int const		lda_B, 
+	       int const		lda_C,
+	       int const		nwarm, 
+	       int const		niter){
+  REAL *A,*B,*C;
+  int sz_A, sz_B, sz_C, i, j;
+  double tstart, tend;
+
+  if (trans_A == 'N') sz_A = lda_A*k;
+  else sz_A = lda_A*m;
+  if (trans_B == 'N') sz_B = lda_B*n;
+  else sz_B = lda_B*k;
+  sz_C = lda_C*n;
+
+  A = (REAL*)malloc(sizeof(REAL)*sz_A);
+  B = (REAL*)malloc(sizeof(REAL)*sz_B);
+  C = (REAL*)malloc(sizeof(REAL)*sz_C);
+
+  srand48(seed);
+  for (i=0; i<sz_C; i++){
+    C[i] = drand48();
+  }
+  for (i=0; i<sz_A; i++){
+    A[i] = drand48();
+  }
+  for (i=0; i<sz_B; i++){
+    B[i] = drand48();
+  }
+
+  for (i=0; i<nwarm; i++){
+    fmm_opt  (trans_A, trans_B,
+	      m, n, k,
+	      A, lda_A,
+	      B, lda_B,
+	      C, lda_C);
+  }
+  tstart = TIME_SEC();
+  for (i=0; i<niter; i++){
+    fmm_opt  (trans_A, trans_B,
+	      m, n, k,
+	      A, lda_A,
+	      B, lda_B,
+	      C, lda_C);
+  }
+  tend = TIME_SEC();
+  printf("benchmark complete.\n");
+  printf("Performed %d iterations at %lf sec/iter, achieving a flop/flops rate of %lf GF.\n",
+	  niter, (tend-tstart)/niter, (2.*n*m*k*niter*1.E-9)/(tend-tstart));
+}
  
 void test_fmm(int const		seed, 
 	      int const		n, 
@@ -31,10 +88,24 @@ void test_fmm(int const		seed,
   C = (REAL*)malloc(sizeof(REAL)*sz_C);
   ans_C = (REAL*)malloc(sizeof(REAL)*sz_C);
 
-  std::fill(A, A+sz_A, 1.0);
+  srand48(seed);
+  for (i=0; i<sz_C; i++){
+    C[i] = drand48();
+  }
+  for (i=0; i<sz_A; i++){
+    A[i] = drand48();
+  }
+  for (i=0; i<sz_B; i++){
+    B[i] = drand48();
+  }
+  srand48(seed);
+  for (i=0; i<sz_C; i++){
+    ans_C[i] = drand48();
+  }
+  /*std::fill(A, A+sz_A, 1.0);
   std::fill(B, B+sz_B, 1.0);
   std::fill(C, C+sz_C, 100.0);
-  std::fill(ans_C, ans_C+sz_C, 100.0);
+  std::fill(ans_C, ans_C+sz_C, 100.0);*/
 
   fmm_naive(trans_A, trans_B,
 	    m, n, k,
@@ -87,7 +158,7 @@ char* getCmdOption(char ** begin,
 int main(int argc, char ** argv){
   int seed, n, m, k;
   char trans_A, trans_B;
-  int lda_A, lda_B, lda_C;
+  int lda_A, lda_B, lda_C, nwarm, niter;
   
   int const in_num = argc;
   char ** input_str = argv;
@@ -95,6 +166,14 @@ int main(int argc, char ** argv){
  /* MPI_Init(&argc, &argv);
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);*/
 
+  if (getCmdOption(input_str, input_str+in_num, "-nwarm")){
+    nwarm = atoi(getCmdOption(input_str, input_str+in_num, "-seed"));
+    if (nwarm < 0) seed = 1;
+  } else nwarm = 1;
+  if (getCmdOption(input_str, input_str+in_num, "-niter")){
+    niter = atoi(getCmdOption(input_str, input_str+in_num, "-seed"));
+    if (niter < 0) seed = 10;
+  } else niter = 10;
   if (getCmdOption(input_str, input_str+in_num, "-seed")){
     seed = atoi(getCmdOption(input_str, input_str+in_num, "-seed"));
     if (seed < 0) seed = 3;
@@ -147,7 +226,12 @@ int main(int argc, char ** argv){
   printf("seed = %d trans_A = %c trans_B = %c lda_A = %d lda_B = %d lda_C = %d\n",
 	  seed, trans_A, trans_B, lda_A, lda_B, lda_C);
   
+#ifndef NOBENCH
+  bench_fmm(seed, n, m, k, trans_A, trans_B, lda_A, lda_B, lda_C, nwarm, niter);
+#endif
+#ifndef NOTEST
   test_fmm(seed, n, m, k, trans_A, trans_B, lda_A, lda_B, lda_C);
+#endif
 
 //  MPI_Finalize();
   return 0;

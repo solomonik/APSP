@@ -2,6 +2,8 @@
 #define __FMM_H__
 
 #include <limits>
+#include <stdlib.h>
+#include <sys/time.h>
 
 #ifndef PRECISION
 #define PRECISION 2
@@ -31,6 +33,22 @@ inline REAL __plus(const REAL& a, const REAL& b){
 }
 #define PLUS( a, b ) __plus((a), (b)) 
 //#define PLUS( a, b ) ( (a) + (b) )
+#endif
+
+#ifndef TIME_SEC
+static double __timer(){
+  static bool initialized = false;
+  static struct timeval start;
+  struct timeval end;
+  if(!initialized){
+    gettimeofday( &start, NULL );
+    initialized = true;
+  }
+  gettimeofday( &end, NULL );
+
+  return (end.tv_sec - start.tv_sec) + 1.0e-6 * (end.tv_usec - start.tv_usec);
+}
+#define TIME_SEC() __timer()
 #endif
 
 
