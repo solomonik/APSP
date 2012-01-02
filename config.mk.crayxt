@@ -1,0 +1,4 @@
+CC	= CC
+LIBS = -lacml
+CFLAGS = -O4 $(DFLAGS) #-fastsse -Minfo=all -Munroll –Mvect=prefetch -Msafeptr -Mipa=inline $(DFLAGS)
+
