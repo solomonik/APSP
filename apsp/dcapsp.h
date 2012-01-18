@@ -17,8 +17,8 @@ typedef struct topology {
  *
  * \param[in] topo the process topology information
  * \param[in] n is the matrix dimension (must be divisible by nrow, ncol)
- * \param[in,out] A is the adjacency matrix on input and the distance 
- *	  	  matrix on output
+ * \param[in,out] A is a n/nrow-by-n/ncol block of the adjacency matrix on 
+ *		  input and a block of the distance matrix on output
  * \param[in,out] pred_A predecessors of A on input and output (ignored if NULL, 0)
  */
 void dcapsp( 	const topology_t * topo,
