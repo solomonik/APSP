@@ -3,6 +3,14 @@
 
 #include "mpi.h"
 
+#define DASSERT 1
+#if DASSERT
+#include "assert.h"
+#define ASRT assert
+#else 
+#define ASRT()
+#endif
+
 typedef struct topology {
   MPI_Comm world;
   MPI_Comm row;
@@ -11,6 +19,9 @@ typedef struct topology {
   int nrow, ncolumn, nlayer;
   int irow, icolumn, ilayer;
 } topology_t;
+
+void split_topo(topology_t const * tparent,
+		topology_t * tsub);
 
 /**
  * \brief computes all-pairs-shortest-path via divide-and-conquer
