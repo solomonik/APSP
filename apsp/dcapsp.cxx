@@ -62,6 +62,9 @@ void blocked_dcapsp(const topology_t * topo,
 
     split_topo(topo, tsub);
     myctr = construct_ctr(tsub, n/2);
+    myctr->num_lyr = 1;
+    myctr->idx_lyr = 0;
+    myctr->buffer = NULL;
 
     if (topo->irow % 2 == 0 &&
 	topo->icol % 2 == 0){
@@ -78,9 +81,6 @@ void blocked_dcapsp(const topology_t * topo,
 	myctr->A = A12;
 	myctr->B = A21;
 	myctr->C = A;
-	myctr->num_lyr = 1;
-	myctr->idx_lyr = 0;
-	myctr->buffer = NULL;
 	myctr->run();
       }
     } else if (topo->irow % 2 == 1 &&
@@ -92,9 +92,6 @@ void blocked_dcapsp(const topology_t * topo,
 	myctr->A = A11;
 	myctr->B = A;
 	myctr->C = A;
-	myctr->num_lyr = 1;
-	myctr->idx_lyr = 0;
-	myctr->buffer = NULL;
 	myctr->run();
       }
       MPI_Send(A, (n/topo->nrow)*(n/topo->ncol), MPI_DOUBLE, topo->icol+1, 2, topo->col);
@@ -104,9 +101,6 @@ void blocked_dcapsp(const topology_t * topo,
 	myctr->A = A;
 	myctr->B = A22;
 	myctr->C = A;
-	myctr->num_lyr = 1;
-	myctr->idx_lyr = 0;
-	myctr->buffer = NULL;
 	myctr->run();
       }
       MPI_Send(A, (n/topo->nrow)*(n/topo->ncol), MPI_DOUBLE, topo->irow-1, 6, topo->row);
@@ -119,9 +113,6 @@ void blocked_dcapsp(const topology_t * topo,
 	myctr->A = A;
 	myctr->B = A11;
 	myctr->C = A;
-	myctr->num_lyr = 1;
-	myctr->idx_lyr = 0;
-	myctr->buffer = NULL;
 	myctr->run();
       }
       MPI_Send(A, (n/topo->nrow)*(n/topo->ncol), MPI_DOUBLE, topo->irow+1, 3, topo->row);
@@ -131,9 +122,6 @@ void blocked_dcapsp(const topology_t * topo,
 	myctr->A = A22;
 	myctr->B = A;
 	myctr->C = A;
-	myctr->num_lyr = 1;
-	myctr->idx_lyr = 0;
-	myctr->buffer = NULL;
 	myctr->run();
       }
       MPI_Send(A, (n/topo->nrow)*(n/topo->ncol), MPI_DOUBLE, topo->icol-1, 7, topo->col);
@@ -149,9 +137,6 @@ void blocked_dcapsp(const topology_t * topo,
 	myctr->A = A21;
 	myctr->B = A12;
 	myctr->C = A;
-	myctr->num_lyr = 1;
-	myctr->idx_lyr = 0;
-	myctr->buffer = NULL;
 	myctr->run();
       }
       blocked_dcapsp(tsub, n/2, A, pred_A);
@@ -175,25 +160,25 @@ void cyclic_dcapsp(const topology_t * topo,
     myctr->idx_lyr = 0;
     myctr->buffer = NULL;
 
-    REAL sub_A11[nb*nb] __attribute__ ((aligned(16)));   
+    REAL sub_A11[nb*nb/4] __attribute__ ((aligned(16)));   
     lda_cpy(nb/2, nb/2, nb, nb/2, A, sub_A11);
     cyclic_dcapsp(topo, n/2, b, sub_A11, pred_A);
 
-    REAL sub_A21[nb*nb] __attribute__ ((aligned(16)));   
-    REAL sub_A12[nb*nb] __attribute__ ((aligned(16)));   
-    REAL sub_A22[nb*nb] __attribute__ ((aligned(16)));   
+    REAL sub_A21[nb*nb/4] __attribute__ ((aligned(16)));   
+    REAL sub_A12[nb*nb/4] __attribute__ ((aligned(16)));   
+    REAL sub_A22[nb*nb/4] __attribute__ ((aligned(16)));   
     lda_cpy(nb/2, nb/2, nb, nb/2, A+nb/2, sub_A21);
     lda_cpy(nb/2, nb/2, nb, nb/2, A+nb*nb/2, sub_A12);
     lda_cpy(nb/2, nb/2, nb, nb/2, A+nb/2+nb*nb/2, sub_A22);
 	
     myctr->A = sub_A11;
-    myctr->B = sub_A21;
-    myctr->C = sub_A21;
+    myctr->B = sub_A12;
+    myctr->C = sub_A12;
     myctr->run();
 
-    myctr->A = sub_A12;
+    myctr->A = sub_A21;
     myctr->B = sub_A11;
-    myctr->C = sub_A12;
+    myctr->C = sub_A21;
     myctr->run();
 
     myctr->A = sub_A21;
@@ -203,14 +188,14 @@ void cyclic_dcapsp(const topology_t * topo,
 
     cyclic_dcapsp(topo, n/2, b, sub_A22, pred_A);
     
-    myctr->A = sub_A21;
+    myctr->A = sub_A12;
     myctr->B = sub_A22;
-    myctr->C = sub_A21;
+    myctr->C = sub_A12;
     myctr->run();
 
     myctr->A = sub_A22;
-    myctr->B = sub_A12;
-    myctr->C = sub_A12;
+    myctr->B = sub_A21;
+    myctr->C = sub_A21;
     myctr->run();
 
     myctr->A = sub_A12;
