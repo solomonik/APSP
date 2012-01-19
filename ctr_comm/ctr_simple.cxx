@@ -95,7 +95,7 @@ void ctr_fmm::run(){
 	 beta,
 	 C,
 	 lda_C);*/
-  fmm_naive('N', 'N', n, n, n, A, n, B, n, C, n);
+  fmm_opt('N', 'N', n, n, n, A, n, B, n, C, n);
 
 }
 
