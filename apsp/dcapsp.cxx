@@ -78,15 +78,15 @@ void blocked_dcapsp(const topology_t * topo,
     if (topo->irow % 2 == 0 &&
 	topo->icol % 2 == 0){
       blocked_dcapsp(tsub, n/2, A, pred_A);
-      MPI_Send(A, (n/topo->nrow)*(n/topo->ncol), MPI_DOUBLE, topo->irow+1, TAG0, topo->row);
-      MPI_Send(A, (n/topo->nrow)*(n/topo->ncol), MPI_DOUBLE, topo->icol+1, TAG1, topo->col);
+      MPI_Send(A, (n/topo->nrow)*(n/topo->ncol), REAL_MPI, topo->irow+1, TAG0, topo->row);
+      MPI_Send(A, (n/topo->nrow)*(n/topo->ncol), REAL_MPI, topo->icol+1, TAG1, topo->col);
       {
 	MPI_Status stat12, stat21;
 	REAL A12[(n/topo->nrow)*(n/topo->ncol)] __attribute__ ((aligned(16)));
 	REAL A21[(n/topo->nrow)*(n/topo->ncol)] __attribute__ ((aligned(16)));
 
-	MPI_Recv(A12, (n/topo->nrow)*(n/topo->ncol), MPI_DOUBLE, topo->irow+1, TAG6, topo->row, &stat21);
-	MPI_Recv(A21, (n/topo->nrow)*(n/topo->ncol), MPI_DOUBLE, topo->icol+1, TAG7, topo->col, &stat12);
+	MPI_Recv(A12, (n/topo->nrow)*(n/topo->ncol), REAL_MPI, topo->irow+1, TAG6, topo->row, &stat21);
+	MPI_Recv(A21, (n/topo->nrow)*(n/topo->ncol), REAL_MPI, topo->icol+1, TAG7, topo->col, &stat12);
 	myctr->A = A12;
 	myctr->B = A21;
 	myctr->C = A;
@@ -97,43 +97,43 @@ void blocked_dcapsp(const topology_t * topo,
       MPI_Status stat;
       {
 	REAL A11[(n/topo->nrow)*(n/topo->ncol)] __attribute__ ((aligned(16)));
-	MPI_Recv(A11, (n/topo->nrow)*(n/topo->ncol), MPI_DOUBLE, topo->irow-1, TAG0, topo->row, &stat);
+	MPI_Recv(A11, (n/topo->nrow)*(n/topo->ncol), REAL_MPI, topo->irow-1, TAG0, topo->row, &stat);
 	myctr->A = A11;
 	myctr->B = A;
 	myctr->C = A;
 	myctr->run();
       }
-      MPI_Send(A, (n/topo->nrow)*(n/topo->ncol), MPI_DOUBLE, topo->icol+1, TAG2, topo->col);
+      MPI_Send(A, (n/topo->nrow)*(n/topo->ncol), REAL_MPI, topo->icol+1, TAG2, topo->col);
       {
 	REAL A22[(n/topo->nrow)*(n/topo->ncol)] __attribute__ ((aligned(16)));
-	MPI_Recv(A22, (n/topo->nrow)*(n/topo->ncol), MPI_DOUBLE, topo->icol+1, TAG5, topo->col, &stat);
+	MPI_Recv(A22, (n/topo->nrow)*(n/topo->ncol), REAL_MPI, topo->icol+1, TAG5, topo->col, &stat);
 	myctr->A = A;
 	myctr->B = A22;
 	myctr->C = A;
 	myctr->run();
       }
-      MPI_Send(A, (n/topo->nrow)*(n/topo->ncol), MPI_DOUBLE, topo->irow-1, TAG6, topo->row);
+      MPI_Send(A, (n/topo->nrow)*(n/topo->ncol), REAL_MPI, topo->irow-1, TAG6, topo->row);
     } else if (topo->irow % 2 == 0 &&
 	       topo->icol % 2 == 1){
       MPI_Status stat;
       {
 	REAL A11[(n/topo->nrow)*(n/topo->ncol)] __attribute__ ((aligned(16)));
-	MPI_Recv(A11, (n/topo->nrow)*(n/topo->ncol), MPI_DOUBLE, topo->icol-1, TAG1, topo->col, &stat);
+	MPI_Recv(A11, (n/topo->nrow)*(n/topo->ncol), REAL_MPI, topo->icol-1, TAG1, topo->col, &stat);
 	myctr->A = A;
 	myctr->B = A11;
 	myctr->C = A;
 	myctr->run();
       }
-      MPI_Send(A, (n/topo->nrow)*(n/topo->ncol), MPI_DOUBLE, topo->irow+1, TAG3, topo->row);
+      MPI_Send(A, (n/topo->nrow)*(n/topo->ncol), REAL_MPI, topo->irow+1, TAG3, topo->row);
       {
 	REAL A22[(n/topo->nrow)*(n/topo->ncol)] __attribute__ ((aligned(16)));
-	MPI_Recv(A22, (n/topo->nrow)*(n/topo->ncol), MPI_DOUBLE, topo->irow+1, TAG4, topo->row, &stat);
+	MPI_Recv(A22, (n/topo->nrow)*(n/topo->ncol), REAL_MPI, topo->irow+1, TAG4, topo->row, &stat);
 	myctr->A = A22;
 	myctr->B = A;
 	myctr->C = A;
 	myctr->run();
       }
-      MPI_Send(A, (n/topo->nrow)*(n/topo->ncol), MPI_DOUBLE, topo->icol-1, TAG7, topo->col);
+      MPI_Send(A, (n/topo->nrow)*(n/topo->ncol), REAL_MPI, topo->icol-1, TAG7, topo->col);
     } else if (topo->irow % 2 == 1 &&
 	       topo->icol % 2 == 1){
       {
@@ -141,16 +141,16 @@ void blocked_dcapsp(const topology_t * topo,
 	REAL A12[(n/topo->nrow)*(n/topo->ncol)] __attribute__ ((aligned(16)));
 	REAL A21[(n/topo->nrow)*(n/topo->ncol)] __attribute__ ((aligned(16)));
 
-	MPI_Recv(A12, (n/topo->nrow)*(n/topo->ncol), MPI_DOUBLE, topo->icol-1, TAG2, topo->col, &stat12);
-	MPI_Recv(A21, (n/topo->nrow)*(n/topo->ncol), MPI_DOUBLE, topo->irow-1, TAG3, topo->row, &stat21);
+	MPI_Recv(A12, (n/topo->nrow)*(n/topo->ncol), REAL_MPI, topo->icol-1, TAG2, topo->col, &stat12);
+	MPI_Recv(A21, (n/topo->nrow)*(n/topo->ncol), REAL_MPI, topo->irow-1, TAG3, topo->row, &stat21);
 	myctr->A = A21;
 	myctr->B = A12;
 	myctr->C = A;
 	myctr->run();
       }
       blocked_dcapsp(tsub, n/2, A, pred_A);
-      MPI_Send(A, (n/topo->nrow)*(n/topo->ncol), MPI_DOUBLE, topo->irow-1, TAG4, topo->row);
-      MPI_Send(A, (n/topo->nrow)*(n/topo->ncol), MPI_DOUBLE, topo->icol-1, TAG5, topo->col);
+      MPI_Send(A, (n/topo->nrow)*(n/topo->ncol), REAL_MPI, topo->irow-1, TAG4, topo->row);
+      MPI_Send(A, (n/topo->nrow)*(n/topo->ncol), REAL_MPI, topo->icol-1, TAG5, topo->col);
     }
   }
 }

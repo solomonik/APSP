@@ -11,10 +11,12 @@
 
 #if (PRECISION==1)
 typedef float REAL;
+#define REAL_MPI MPI_FLOAT
 #endif
 
 #if (PRECISION==2)
 typedef double REAL;
+#define REAL_MPI MPI_DOUBLE
 #endif
 
 #ifndef MIN

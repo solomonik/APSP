@@ -49,5 +49,5 @@ apsp_fmm: apsp_fmm.cpp fmm_naive.o
 
 
 clean:
-	rm -f $(TARGET)
+	rm -f $(TARGET) test_dcapsp *.o
 	rm -f apspserial apspfmm
