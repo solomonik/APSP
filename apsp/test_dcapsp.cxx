@@ -9,18 +9,6 @@
 #include "../shared/util.h"
 
 
-void floyd_warshall(REAL * A, int const n){
-  int i,j,k;
-  
-  for (k=0; k<n; k++){
-    for (i=0; i<n; i++){
-      for (j=0; j<n; j++){
-	A[j*n+i] = MIN(A[j*n+i], (A[k*n+i] + A[j*n+k]));
-      }
-    }
-  }
-}
-
 void read_matrix_block(	int const	n,
 			int const	irow,
 			int const	nrow,
@@ -37,11 +25,12 @@ void read_matrix_block(	int const	n,
 }
 
 void test_dcapsp( int const	n,
+		  int const	b,
 		  int const	seed,
 		  int const	rank,
 		  int const	np,
 		  int const	pdim){
-  int i, pass;
+  int i, pass, allpass;
   topology_t topo;
   topo.world 	= MPI_COMM_WORLD;
   topo.layer	= MPI_COMM_WORLD;
@@ -56,11 +45,17 @@ void test_dcapsp( int const	n,
   REAL * A = (REAL*)malloc(n*n*sizeof(REAL));
   REAL * sub_A = (REAL*)malloc(n*n*sizeof(REAL)/np);
   REAL * ans_A = (REAL*)malloc(n*n*sizeof(REAL)/np);
+
+  srand48(seed);
+  for (i=0; i<n*n; i++){
+    A[i] = drand48();
+  }
+
   read_matrix_block(n, topo.irow, topo.nrow, topo.icol, topo.ncol, A, sub_A);
 
   if (rank == 0)
     printf("Testing dcapsp.\n");
-  dcapsp(&topo, n, sub_A);
+  dcapsp(&topo, n, sub_A, 0, b);
 
   if (rank == 0)
     printf("Completed dcapsp.\n");
@@ -76,7 +71,8 @@ void test_dcapsp( int const	n,
       pass = 0;
     }
   }
-  if (rank == 0 && pass)
+  MPI_Reduce(&pass, &allpass, 1, MPI_INT, MPI_SUM, 0, MPI_COMM_WORLD);
+  if (rank == 0 && allpass == np)
     printf("Test successful.\n");
 }
 
@@ -91,7 +87,7 @@ char* getCmdOption(char ** begin, char ** end, const std::string & option){
 }
 
 int main(int argc, char **argv) {
-  int seed, rank, np, pdim, n;
+  int seed, rank, np, pdim, n, b;
   int const in_num = argc;
   char ** input_str = argv;
 
@@ -103,17 +99,22 @@ int main(int argc, char **argv) {
     seed = atoi(getCmdOption(input_str, input_str+in_num, "-seed"));
     if (seed < 0) seed = 3;
   } else seed = 3;
+  if (getCmdOption(input_str, input_str+in_num, "-b")){
+    b = atoi(getCmdOption(input_str, input_str+in_num, "-b"));
+    if (b < 0) b = 32;
+  } else b = 32;
   if (getCmdOption(input_str, input_str+in_num, "-n")){
     n = atoi(getCmdOption(input_str, input_str+in_num, "-n"));
-    if (n < 0) n = 3;
-  } else n = 3;
+    if (n < 0) n = 128;
+  } else n = 128;
   if (getCmdOption(input_str, input_str+in_num, "-pdim")){
-    pdim = atoi(getCmdOption(input_str, input_str+in_num, "-seed"));
-    if (pdim < 0) seed = 3;
-  } else pdim = 3;
+    pdim = atoi(getCmdOption(input_str, input_str+in_num, "-pdim"));
+    if (pdim < 0) pdim = 1;
+  } else pdim = 1;
 
   assert(pdim*pdim == np);
 
-  test_dcapsp(n, seed, rank, np, pdim);
+  test_dcapsp(n, b, seed, rank, np, pdim);
 
+  MPI_Finalize();
 }

@@ -23,8 +23,11 @@ void split_topo(topology_t const * tparent,
 
 ctr * construct_ctr(const topology_t * topo,
 		    const int n){
-  CommData_t cdt_x, cdt_y;
+  CommData_t * cdt_x, * cdt_y;
   ASRT(topo->nrow == topo->ncol);
+
+  cdt_x = (CommData_t*)malloc(sizeof(CommData_t));
+  cdt_y = (CommData_t*)malloc(sizeof(CommData_t));
 
   ctr_fmm * cfmm = new ctr_fmm();
   ctr_2d_sqr_bcast * csb = new ctr_2d_sqr_bcast();
@@ -36,23 +39,23 @@ ctr * construct_ctr(const topology_t * topo,
   csb->sz_A	= (n/topo->nrow)*(n/topo->ncol);
   csb->sz_B	= (n/topo->nrow)*(n/topo->ncol);
 
-  SET_COMM((topo->row), (topo->irow), (topo->nrow), (&cdt_x));
-  SET_COMM((topo->col), (topo->icol), (topo->ncol), (&cdt_y));
+  SET_COMM((topo->row), (topo->irow), (topo->nrow), cdt_x);
+  SET_COMM((topo->col), (topo->icol), (topo->ncol), cdt_y);
 
-  csb->cdt_x = &cdt_x;
-  csb->cdt_y = &cdt_y;
+  csb->cdt_x = cdt_x;
+  csb->cdt_y = cdt_y;
 
   return csb;
 }
-
 
 void blocked_dcapsp(const topology_t * topo,
 		    const int n,
 		    REAL * A,		
 		    int * pred_A = 0){
-  if (topo->nrow == 0 && topo->ncol == 0){
-    fmm_naive('N', 'N', n, n, n, A, n, A, n, A, n);
+  if (topo->nrow == 1 && topo->ncol == 1){
+    floyd_warshall(A, n);
   } else {
+    //printf("n=%d, nrow = %d, ncol = %d\n",n,topo->nrow, topo->ncol);
     topology_t * tsub;
     ctr * myctr;
     tsub = (topology_t*)malloc(sizeof(topology_t));
@@ -106,7 +109,7 @@ void blocked_dcapsp(const topology_t * topo,
 	myctr->buffer = NULL;
 	myctr->run();
       }
-      MPI_Send(A, (n/topo->nrow)*(n/topo->ncol), MPI_DOUBLE, topo->irow+1, 6, topo->row);
+      MPI_Send(A, (n/topo->nrow)*(n/topo->ncol), MPI_DOUBLE, topo->irow-1, 6, topo->row);
     } else if (topo->irow % 2 == 0 &&
 	       topo->icol % 2 == 1){
       MPI_Status stat;
@@ -158,6 +161,70 @@ void blocked_dcapsp(const topology_t * topo,
   }
 }
 
+void cyclic_dcapsp(const topology_t * topo,
+		   const int n,
+		   const int b,
+		   REAL * A,		
+		   int * pred_A = 0){
+  int nb = n/topo->nrow;
+  if (nb <= b){
+    blocked_dcapsp(topo, n, A, pred_A);
+  } else {
+    ctr * myctr = construct_ctr(topo, n/2);
+    myctr->num_lyr = 1;
+    myctr->idx_lyr = 0;
+    myctr->buffer = NULL;
+
+    REAL sub_A11[nb*nb] __attribute__ ((aligned(16)));   
+    lda_cpy(nb/2, nb/2, nb, nb/2, A, sub_A11);
+    cyclic_dcapsp(topo, n/2, b, sub_A11, pred_A);
+
+    REAL sub_A21[nb*nb] __attribute__ ((aligned(16)));   
+    REAL sub_A12[nb*nb] __attribute__ ((aligned(16)));   
+    REAL sub_A22[nb*nb] __attribute__ ((aligned(16)));   
+    lda_cpy(nb/2, nb/2, nb, nb/2, A+nb/2, sub_A21);
+    lda_cpy(nb/2, nb/2, nb, nb/2, A+nb*nb/2, sub_A12);
+    lda_cpy(nb/2, nb/2, nb, nb/2, A+nb/2+nb*nb/2, sub_A22);
+	
+    myctr->A = sub_A11;
+    myctr->B = sub_A21;
+    myctr->C = sub_A21;
+    myctr->run();
+
+    myctr->A = sub_A12;
+    myctr->B = sub_A11;
+    myctr->C = sub_A12;
+    myctr->run();
+
+    myctr->A = sub_A21;
+    myctr->B = sub_A12;
+    myctr->C = sub_A22;
+    myctr->run();
+
+    cyclic_dcapsp(topo, n/2, b, sub_A22, pred_A);
+    
+    myctr->A = sub_A21;
+    myctr->B = sub_A22;
+    myctr->C = sub_A21;
+    myctr->run();
+
+    myctr->A = sub_A22;
+    myctr->B = sub_A12;
+    myctr->C = sub_A12;
+    myctr->run();
+
+    myctr->A = sub_A12;
+    myctr->B = sub_A21;
+    myctr->C = sub_A11;
+    myctr->run();
+    
+    lda_cpy(nb/2, nb/2, nb/2, nb, sub_A11, A);
+    lda_cpy(nb/2, nb/2, nb/2, nb, sub_A21, A+nb/2);
+    lda_cpy(nb/2, nb/2, nb/2, nb, sub_A12, A+nb*nb/2);
+    lda_cpy(nb/2, nb/2, nb/2, nb, sub_A22, A+nb/2+nb*nb/2);
+  }
+}
+
 
 /**
  * \brief computes all-pairs-shortest-path via divide-and-conquer
@@ -167,13 +234,28 @@ void blocked_dcapsp(const topology_t * topo,
  * \param[in,out] A is a n/nrow-by-n/ncol block of the adjacency matrix on 
  *		  input and a block of the distance matrix on output
  * \param[in,out] pred_A predecessors of A on input and output (ignored if NULL, 0)
+ * \param[in] b is the blocking factor for when to switch from cyclic to blocked
  */
 void dcapsp(const topology_t * topo,
 	    const int n,
 	    REAL * A,		
-	    int * pred_A){
+	    int * pred_A,
+	    const int b){
 
-  blocked_dcapsp(topo, n, A, pred_A);
+//  blocked_dcapsp(topo, n, A, pred_A);
+  cyclic_dcapsp(topo, n, b, A, pred_A);
 
+}
+
+void floyd_warshall(REAL * A, int const n){
+  int i,j,k;
+  
+  for (k=0; k<n; k++){
+    for (i=0; i<n; i++){
+      for (j=0; j<n; j++){
+	A[j*n+i] = MIN(A[j*n+i], (A[k*n+i] + A[j*n+k]));
+      }
+    }
+  }
 }
 

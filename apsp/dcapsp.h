@@ -32,10 +32,15 @@ void split_topo(topology_t const * tparent,
  * \param[in,out] A is a n/nrow-by-n/ncol block of the adjacency matrix on 
  *		  input and a block of the distance matrix on output
  * \param[in,out] pred_A predecessors of A on input and output (ignored if NULL, 0)
+ * \param[in] b is the blocking factor for when to switch from cyclic to blocked
  */
-void dcapsp( 	const topology_t * topo,
-		const int n,
-		REAL * A,		
-		int * pred_A = 0);
+void dcapsp(const topology_t * topo,
+	    const int n,
+	    REAL * A,		
+	    int * pred_A = 0,
+	    const int b = 32);
+
+
+void floyd_warshall(REAL * A, int const n);
 
 #endif
