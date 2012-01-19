@@ -2,6 +2,7 @@
 #define __DCAPSP_H__
 
 #include "mpi.h"
+#include "../fmm/fmm.h"
 
 #define DASSERT 1
 #if DASSERT
@@ -14,10 +15,10 @@
 typedef struct topology {
   MPI_Comm world;
   MPI_Comm row;
-  MPI_Comm column;
+  MPI_Comm col;
   MPI_Comm layer;
-  int nrow, ncolumn, nlayer;
-  int irow, icolumn, ilayer;
+  int nrow, ncol, nlayer;
+  int irow, icol, ilayer;
 } topology_t;
 
 void split_topo(topology_t const * tparent,
