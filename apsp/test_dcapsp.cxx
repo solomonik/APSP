@@ -24,6 +24,52 @@ void read_matrix_block(	int const	n,
   }
 }
 
+void bench_dcapsp(int const	n,
+		  int const	b,
+		  int const	seed,
+		  int const	iter,
+		  int const	rank,
+		  int const	np,
+		  int const	pdim){
+  int i, it;
+  double t_st, t_end, t_all;
+
+  topology_t topo;
+  topo.world 	= MPI_COMM_WORLD;
+  topo.layer	= MPI_COMM_WORLD;
+  topo.nrow 	= pdim;
+  topo.ncol 	= pdim;
+  topo.irow 	= rank/pdim;
+  topo.icol 	= rank%pdim;
+
+  MPI_Comm_split(MPI_COMM_WORLD, topo.icol, topo.irow, &topo.row);
+  MPI_Comm_split(MPI_COMM_WORLD, topo.irow, topo.icol, &topo.col);
+
+  REAL A[n*n] __attribute__ ((aligned(16)));
+
+
+  if (rank == 0)
+    printf("Benchmarking dcapsp.\n");
+  MPI_Barrier(MPI_COMM_WORLD);
+  t_all = 0.0;
+  for (it=0; it<iter; it++){
+    srand48(seed);
+    for (i=0; i<n*n/np; i++){
+      A[i] = drand48();
+    }
+    t_st = TIME_SEC();
+    dcapsp(&topo, n, A, 0, b);
+    t_end = TIME_SEC();
+    t_all += t_end - t_st;
+  }
+
+  if (rank == 0){
+    printf("Completed %d iterations of dcapsp.\n", iter);
+    printf("%lf seconds per iteration, %lf Gigaflops (GF)\n", t_all, 2.E-9*n*n*n*iter/t_all);
+  }
+}
+
+
 void test_dcapsp( int const	n,
 		  int const	b,
 		  int const	seed,
@@ -87,7 +133,7 @@ char* getCmdOption(char ** begin, char ** end, const std::string & option){
 }
 
 int main(int argc, char **argv) {
-  int seed, rank, np, pdim, n, b;
+  int seed, rank, np, pdim, n, b, test, iter;
   int const in_num = argc;
   char ** input_str = argv;
 
@@ -99,6 +145,14 @@ int main(int argc, char **argv) {
     seed = atoi(getCmdOption(input_str, input_str+in_num, "-seed"));
     if (seed < 0) seed = 3;
   } else seed = 3;
+  if (getCmdOption(input_str, input_str+in_num, "-iter")){
+    iter = atoi(getCmdOption(input_str, input_str+in_num, "-iter"));
+    if (iter < 0) iter = 3;
+  } else iter = 3;
+  if (getCmdOption(input_str, input_str+in_num, "-test")){
+    test = atoi(getCmdOption(input_str, input_str+in_num, "-test"));
+    if (test < 0 || test > 1) test = 1;
+  } else test = 1;
   if (getCmdOption(input_str, input_str+in_num, "-b")){
     b = atoi(getCmdOption(input_str, input_str+in_num, "-b"));
     if (b < 0) b = 32;
@@ -114,7 +168,19 @@ int main(int argc, char **argv) {
 
   assert(pdim*pdim == np);
 
-  test_dcapsp(n, b, seed, rank, np, pdim);
+#ifdef TAU
+  TAU_PROFILE_TIMER(timer, "main", "int (int, char**)", TAU_USER);
+  TAU_PROFILE_START(timer);
+  TAU_PROFILE_INIT(argc, argv);
+  TAU_PROFILE_SET_NODE(rank);
+  TAU_PROFILE_SET_CONTEXT(0);
+#endif
 
+  if (iter > 0)
+    bench_dcapsp(n, b, seed, iter, rank, np, pdim);
+  if (test)
+    test_dcapsp(n, b, seed, rank, np, pdim);
+  
+  TAU_PROFILE_STOP(timer);
   MPI_Finalize();
 }

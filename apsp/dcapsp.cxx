@@ -57,12 +57,34 @@ ctr * construct_ctr(const topology_t * topo,
 #define TAG6 16
 #define TAG7 17
 
+void seq_dcapsp(int const 	n,
+		int const	lda,
+		int const	b,
+		REAL *		A,
+		int *		pred_A = 0){
+  if (n<=b){
+    floyd_warshall(A, n, lda);
+  } else {
+    TAU_FSTART(seq_dcapsp);
+    seq_dcapsp(n/2, lda, b, A, pred_A);
+    fmm_opt('N', 'N', n/2, n/2, n/2, A+n/2, lda, A, lda, A+n/2, lda, pred_A, pred_A, lda);
+    fmm_opt('N', 'N', n/2, n/2, n/2, A, lda, A+lda*n/2, lda, A+lda*n/2, lda, pred_A, pred_A, lda);
+    fmm_opt('N', 'N', n/2, n/2, n/2, A+n/2, lda, A+lda*n/2, lda, A+(lda+1)*n/2, lda, pred_A, pred_A, lda);
+    seq_dcapsp(n/2, lda, b, A+(lda+1)*n/2, pred_A);
+    fmm_opt('N', 'N', n/2, n/2, n/2, A+(lda+1)*n/2, lda, A+n/2, lda, A+n/2, lda, pred_A, pred_A, lda);
+    fmm_opt('N', 'N', n/2, n/2, n/2, A+lda*n/2, lda, A+(lda+1)*n/2, lda, A+lda*n/2, lda, pred_A, pred_A, lda);
+    fmm_opt('N', 'N', n/2, n/2, n/2, A+lda*n/2, lda, A+n/2, lda, A, lda, pred_A, pred_A, lda);
+    TAU_FSTOP(seq_dcapsp);
+  }  
+}
+
 void blocked_dcapsp(const topology_t * topo,
 		    const int n,
 		    REAL * A,		
 		    int * pred_A = 0){
   if (topo->nrow == 1 && topo->ncol == 1){
-    floyd_warshall(A, n);
+//    floyd_warshall(A, n);
+    seq_dcapsp(n, n, 8, A, pred_A);
   } else {
     //printf("n=%d, nrow = %d, ncol = %d\n",n,topo->nrow, topo->ncol);
     topology_t * tsub;
@@ -243,6 +265,7 @@ void dcapsp(const topology_t * topo,
 
 void floyd_warshall(REAL * A, int const n){
   int i,j,k;
+  TAU_FSTART(floyd_warshall);
   
   for (k=0; k<n; k++){
     for (i=0; i<n; i++){
@@ -251,5 +274,21 @@ void floyd_warshall(REAL * A, int const n){
       }
     }
   }
+  TAU_FSTOP(floyd_warshall);
+}
+
+
+void floyd_warshall(REAL * A, int const n, int const lda){
+  int i,j,k;
+  TAU_FSTART(floyd_warshall);
+  
+  for (k=0; k<n; k++){
+    for (i=0; i<n; i++){
+      for (j=0; j<n; j++){
+	A[j*lda+i] = MIN(A[j*lda+i], (A[k*lda+i] + A[j*lda+k]));
+      }
+    }
+  }
+  TAU_FSTOP(floyd_warshall);
 }
 

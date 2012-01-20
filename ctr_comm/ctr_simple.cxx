@@ -95,7 +95,9 @@ void ctr_fmm::run(){
 	 beta,
 	 C,
 	 lda_C);*/
+  TAU_FSTART(ctr_fmm__fmm_opt);
   fmm_opt('N', 'N', n, n, n, A, n, B, n, C, n);
+  TAU_FSTOP(ctr_fmm__fmm_opt);
 
 }
 

@@ -10,6 +10,19 @@
 
 #include "fmm.h"
 
+#ifndef THREADED
+#define THREADED	1
+#endif
+
+#if THREADED
+#define TBLKN	3
+#define TBLKM	1
+#include "omp.h"
+#else
+#define TBLKN	1
+#define TBLKM	1
+#endif
+
 #ifndef CACHE_HOP_SIZE
 #define CACHE_HOP_SIZE 256
 #endif
@@ -48,9 +61,6 @@
 #ifndef RBM
 #define RBM 4
 #endif
-
-//#define min(a,b) (((a)<(b))?(a):(b))
-//#define max(a,b) (((a)>(b))?(a):(b))
 
 
 
@@ -496,14 +506,27 @@ void fmm_opt( 	const char trans_A,	const char trans_B,
       blk_transp(pad_C, C_swap, npad, mpad);
       memcpy(pad_C, C_swap, npad*mpad*sizeof(REAL));
     }
-    {
       //  pad_A = A_swap;
       /*For each block combination*/
+#if THREADED
+    #pragma omp parallel num_threads(TBLKN*TBLKM)
+    {
+      int tidn, tidm;
+      tidn = omp_get_thread_num() / TBLKM;
+      tidm = omp_get_thread_num() % TBLKM;
+#else
+    {
+#endif
       for( int i2 = 0; i2 < mpad; i2 += L2M ) {
 	for( int j2 = 0; j2 < npad; j2 += L2N ) {
 	  for( int k2 = 0; k2 < kpad; k2 += L2K ) {
+#if THREADED
+	    for( int i = i2 + tidm*BLOCK_SIZE_M; i < MIN(mpad,i2+L2M); i += TBLKM*BLOCK_SIZE_M ) {
+	      for( int j = j2 + tidn*BLOCK_SIZE_N; j < MIN(npad,j2+L2N); j += TBLKN*BLOCK_SIZE_N ) {
+#else
 	    for( int i = i2; i < MIN(mpad,i2+L2M); i += BLOCK_SIZE_M ) {
 	      for( int j = j2; j < MIN(npad,j2+L2N); j += BLOCK_SIZE_N ) {
+#endif
 		for( int k = k2; k < MIN(kpad,k2+L2K); k += BLOCK_SIZE_K ) {
 		  /*This gets the correct block size (for fringe blocks also)*/
 		  int M = MIN( BLOCK_SIZE_M, mpad-i );

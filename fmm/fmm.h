@@ -37,9 +37,9 @@ inline REAL __plus(const REAL& a, const REAL& b){
 //#define PLUS( a, b ) ( (a) + (b) )
 #endif
 
-#include "../shared/util.h"
+//#include "../shared/util.h"
 
-/*#ifndef TIME_SEC
+#ifndef TIME_SEC
 static double __timer(){
   static bool initialized = false;
   static struct timeval start;
@@ -53,7 +53,7 @@ static double __timer(){
   return (end.tv_sec - start.tv_sec) + 1.0e-6 * (end.tv_usec - start.tv_usec);
 }
 #define TIME_SEC() __timer()
-#endif*/
+#endif
 
 
 void fmm_naive( const char trans_A,	const char trans_B,
