@@ -14,9 +14,28 @@
 #define THREADED	1
 #endif
 
-#if THREADED
+#ifdef HOPPER
 #define TBLKN	3
-#define TBLKM	1
+#define TBLKM	2
+#define CACHE_HOP_SIZE 256
+#define BLOCK_SIZE_M 30
+#define BLOCK_SIZE_N 40
+#define BLOCK_SIZE_K 80
+#define RBM 2
+#define RBN 2
+#define RBK 8
+#define L2M 120
+#define L2N 120
+#define L2K 160
+#endif
+
+#if THREADED
+#ifndef TBLKN
+#define TBLKN	3
+#endif
+#ifndef TBLKM
+#define TBLKM	2
+#endif
 #include "omp.h"
 #else
 #define TBLKN	1
