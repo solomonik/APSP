@@ -1,4 +1,14 @@
 CC	= CC
-LIBS = -lacml
-CFLAGS = -O4 $(DFLAGS) #-fastsse -Minfo=all -Munroll –Mvect=prefetch -Msafeptr -Mipa=inline $(DFLAGS)
+CXX	= CC
+#CFLAGS  = -g -O0 $(DFLAGS)
+OPENMP = -fopenmp
+CFLAGS = -O4 -DUSE_OMP -DHOPPER $(OPENMP) $(DFLAGS)
+LIBS    = $(OPENMP)
+
+ifneq (,$(findstring DTAU,$(DFLAGS)))
+        include  $(TAUROOTDIR)/include/Makefile
+        CFLAGS+=$(TAU_INCLUDE) $(TAU_DEFS) 
+#        LIBS+=$(TAU_MPI_LIBS) $(TAU_LIBS) 
+        LIBS+= $(TAU_LIBS)
+endif
 
