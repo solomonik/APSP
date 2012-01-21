@@ -167,11 +167,11 @@ int main(int argc, char ** argv){
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);*/
 
   if (getCmdOption(input_str, input_str+in_num, "-nwarm")){
-    nwarm = atoi(getCmdOption(input_str, input_str+in_num, "-seed"));
+    nwarm = atoi(getCmdOption(input_str, input_str+in_num, "-nwarm"));
     if (nwarm < 0) seed = 1;
   } else nwarm = 1;
   if (getCmdOption(input_str, input_str+in_num, "-niter")){
-    niter = atoi(getCmdOption(input_str, input_str+in_num, "-seed"));
+    niter = atoi(getCmdOption(input_str, input_str+in_num, "-niter"));
     if (niter < 0) seed = 10;
   } else niter = 10;
   if (getCmdOption(input_str, input_str+in_num, "-seed")){
