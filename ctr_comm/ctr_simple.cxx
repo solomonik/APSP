@@ -25,6 +25,7 @@
 #include "../shared/util.h"
 #include "ctr_comm.h"
 #include "../fmm/fmm.h"
+#include <float.h>
 
 /**
  * \brief deallocates generic ctr object
@@ -202,14 +203,18 @@ void ctr_lyr::run(){
 
   if (buffer != NULL){	
     alloced = 0;
-    rec_ctr->C 	= buffer;
   } else {
     alloced = 1;
-    ret = posix_memalign((void**)&rec_ctr->C,
+    ret = posix_memalign((void**)&buffer,
 			 ALIGN_BYTES,
 			 mem_fp());
     LIBT_ASSERT(ret==0);
   }
+  rec_ctr->C = buffer;
+  if (idx_lyr == 0)
+    memcpy(rec_ctr->C, C, sz_C*sizeof(double));
+  else
+    std::fill(rec_ctr->C, rec_ctr->C+sz_C, DBL_MAX);
   
   rec_ctr->A 		= A;
   rec_ctr->B 		= B;
@@ -217,11 +222,14 @@ void ctr_lyr::run(){
   rec_ctr->num_lyr 	= cdt->np;
   rec_ctr->idx_lyr 	= cdt->rank;
 
+  BCAST(A, sz_A, MPI_DOUBLE, 0, cdt);
+  BCAST(B, sz_B, MPI_DOUBLE, 0, cdt);
+  
   rec_ctr->run();
   
   /* FIXME: unnecessary except for current DCMF wrapper */
   COMM_BARRIER(cdt);
-  ALLREDUCE(buffer, C, sz_C, MPI_DOUBLE, MPI_SUM, cdt);
+  REDUCE(buffer, C, sz_C, MPI_DOUBLE, red_op, 0, cdt);
 
   if (alloced){
     free(buffer);

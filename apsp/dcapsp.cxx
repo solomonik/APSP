@@ -8,22 +8,25 @@ void split_topo(topology_t const * tparent,
   ASRT(tparent->nrow%2 == 0);
   ASRT(tparent->ncol%2 == 0);
 
-  tsub->ilayer 	= tparent->ilayer;  
-  tsub->nlayer 	= tparent->nlayer;
+  tsub->ilayer 	= tparent->ilayer/2;  
+  tsub->nlayer 	= MAX(1,tparent->nlayer/2);
   tsub->nrow	= tparent->nrow/2;
   tsub->irow	= tparent->irow/2;
   tsub->ncol	= tparent->ncol/2;
   tsub->icol	= tparent->icol/2;
 
   tsub->world 	= tparent->world;  
-  tsub->layer 	= tparent->layer;  
   MPI_Comm_split(tparent->row, tparent->irow%2, tsub->irow, &tsub->row);
   MPI_Comm_split(tparent->col, tparent->icol%2, tsub->icol, &tsub->col);
+  if (tparent->nlayer > 1)
+    MPI_Comm_split(tparent->layer, tparent->ilayer%2, tsub->ilayer, &tsub->layer);
+  else
+    tsub->layer = tparent->layer;
 }
 
 ctr * construct_ctr(const topology_t * topo,
 		    const int n){
-  CommData_t * cdt_x, * cdt_y;
+  CommData_t * cdt_x, * cdt_y, * cdt_lyr;
   ASRT(topo->nrow == topo->ncol);
 
   cdt_x = (CommData_t*)malloc(sizeof(CommData_t));
@@ -44,8 +47,26 @@ ctr * construct_ctr(const topology_t * topo,
 
   csb->cdt_x = cdt_x;
   csb->cdt_y = cdt_y;
-
-  return csb;
+  
+  if (topo->nlayer > 1){
+    cdt_lyr = (CommData_t*)malloc(sizeof(CommData_t));
+    SET_COMM((topo->layer), (topo->ilayer), (topo->nlayer), cdt_lyr);
+    ctr_lyr * clyr 	= new ctr_lyr();
+    clyr->k		= n;
+    clyr->sz_A		= (n/topo->nrow)*(n/topo->ncol);
+    clyr->sz_B		= (n/topo->nrow)*(n/topo->ncol);
+    clyr->sz_C		= (n/topo->nrow)*(n/topo->ncol);
+    clyr->rec_ctr 	= csb;
+    clyr->cdt 		= cdt_lyr;
+    clyr->idx_lyr	= topo->ilayer;
+    clyr->num_lyr	= topo->nlayer;
+    clyr->red_op	= MPI_MIN;
+    return clyr;
+  } else {
+    csb->idx_lyr	= 0;
+    csb->num_lyr	= 1;
+    return csb;
+  }
 }
 
 #define TAG0 10
@@ -78,13 +99,23 @@ void seq_dcapsp(int const 	n,
   }  
 }
 
+void cyclic_dcapsp(const topology_t * topo,
+		   const int n,
+		   const int b1,
+		   const int b2,
+		   REAL * A,		
+		   int * pred_A = 0);
+
 void blocked_dcapsp(const topology_t * topo,
 		    const int n,
+		    const int b,
 		    REAL * A,		
 		    int * pred_A = 0){
   if (topo->nrow == 1 && topo->ncol == 1){
 //    floyd_warshall(A, n);
     seq_dcapsp(n, n, 8, A, pred_A);
+  } else if (b != -1 && topo->nlayer == 1) {
+    cyclic_dcapsp(topo, n, b, b, A, pred_A);
   } else {
     //printf("n=%d, nrow = %d, ncol = %d\n",n,topo->nrow, topo->ncol);
     topology_t * tsub;
@@ -93,114 +124,145 @@ void blocked_dcapsp(const topology_t * topo,
 
     split_topo(topo, tsub);
     myctr = construct_ctr(tsub, n/2);
-    myctr->num_lyr = 1;
-    myctr->idx_lyr = 0;
     myctr->buffer = NULL;
 
-    if (topo->irow % 2 == 0 &&
-	topo->icol % 2 == 0){
-      blocked_dcapsp(tsub, n/2, A, pred_A);
-      MPI_Send(A, (n/topo->nrow)*(n/topo->ncol), REAL_MPI, topo->irow+1, TAG0, topo->row);
-      MPI_Send(A, (n/topo->nrow)*(n/topo->ncol), REAL_MPI, topo->icol+1, TAG1, topo->col);
-      {
-	MPI_Status stat12, stat21;
-	REAL A12[(n/topo->nrow)*(n/topo->ncol)] __attribute__ ((aligned(16)));
-	REAL A21[(n/topo->nrow)*(n/topo->ncol)] __attribute__ ((aligned(16)));
+    if (topo->ilayer%2 == 0){
+      if (topo->irow % 2 == 0 &&
+	  topo->icol % 2 == 0){
+	blocked_dcapsp(tsub, n/2, b, A, pred_A);
+	if (topo->ilayer == 0){
+	  MPI_Send(A, (n/topo->nrow)*(n/topo->ncol), REAL_MPI, topo->irow+1, TAG0, topo->row);
+	  MPI_Send(A, (n/topo->nrow)*(n/topo->ncol), REAL_MPI, topo->icol+1, TAG1, topo->col);
+	}
+	{
+	  MPI_Status stat12, stat21;
+	  REAL A12[(n/topo->nrow)*(n/topo->ncol)] __attribute__ ((aligned(16)));
+	  REAL A21[(n/topo->nrow)*(n/topo->ncol)] __attribute__ ((aligned(16)));
 
-	MPI_Recv(A12, (n/topo->nrow)*(n/topo->ncol), REAL_MPI, topo->irow+1, TAG6, topo->row, &stat21);
-	MPI_Recv(A21, (n/topo->nrow)*(n/topo->ncol), REAL_MPI, topo->icol+1, TAG7, topo->col, &stat12);
-	myctr->A = A12;
-	myctr->B = A21;
-	myctr->C = A;
-	myctr->run();
-      }
-    } else if (topo->irow % 2 == 1 &&
-	       topo->icol % 2 == 0){
-      MPI_Status stat;
-      {
-	REAL A11[(n/topo->nrow)*(n/topo->ncol)] __attribute__ ((aligned(16)));
-	MPI_Recv(A11, (n/topo->nrow)*(n/topo->ncol), REAL_MPI, topo->irow-1, TAG0, topo->row, &stat);
-	myctr->A = A11;
-	myctr->B = A;
-	myctr->C = A;
-	myctr->run();
-      }
-      MPI_Send(A, (n/topo->nrow)*(n/topo->ncol), REAL_MPI, topo->icol+1, TAG2, topo->col);
-      {
-	REAL A22[(n/topo->nrow)*(n/topo->ncol)] __attribute__ ((aligned(16)));
-	MPI_Recv(A22, (n/topo->nrow)*(n/topo->ncol), REAL_MPI, topo->icol+1, TAG5, topo->col, &stat);
-	myctr->A = A;
-	myctr->B = A22;
-	myctr->C = A;
-	myctr->run();
-      }
-      MPI_Send(A, (n/topo->nrow)*(n/topo->ncol), REAL_MPI, topo->irow-1, TAG6, topo->row);
-    } else if (topo->irow % 2 == 0 &&
-	       topo->icol % 2 == 1){
-      MPI_Status stat;
-      {
-	REAL A11[(n/topo->nrow)*(n/topo->ncol)] __attribute__ ((aligned(16)));
-	MPI_Recv(A11, (n/topo->nrow)*(n/topo->ncol), REAL_MPI, topo->icol-1, TAG1, topo->col, &stat);
-	myctr->A = A;
-	myctr->B = A11;
-	myctr->C = A;
-	myctr->run();
-      }
-      MPI_Send(A, (n/topo->nrow)*(n/topo->ncol), REAL_MPI, topo->irow+1, TAG3, topo->row);
-      {
-	REAL A22[(n/topo->nrow)*(n/topo->ncol)] __attribute__ ((aligned(16)));
-	MPI_Recv(A22, (n/topo->nrow)*(n/topo->ncol), REAL_MPI, topo->irow+1, TAG4, topo->row, &stat);
-	myctr->A = A22;
-	myctr->B = A;
-	myctr->C = A;
-	myctr->run();
-      }
-      MPI_Send(A, (n/topo->nrow)*(n/topo->ncol), REAL_MPI, topo->icol-1, TAG7, topo->col);
-    } else if (topo->irow % 2 == 1 &&
-	       topo->icol % 2 == 1){
-      {
-	MPI_Status stat12, stat21;
-	REAL A12[(n/topo->nrow)*(n/topo->ncol)] __attribute__ ((aligned(16)));
-	REAL A21[(n/topo->nrow)*(n/topo->ncol)] __attribute__ ((aligned(16)));
+	  if (topo->ilayer == 0){
+	    MPI_Recv(A12, (n/topo->nrow)*(n/topo->ncol), REAL_MPI, topo->irow+1, TAG6, topo->row, &stat21);
+	    MPI_Recv(A21, (n/topo->nrow)*(n/topo->ncol), REAL_MPI, topo->icol+1, TAG7, topo->col, &stat12);
+	  }
+	  myctr->A = A12;
+	  myctr->B = A21;
+	  myctr->C = A;
+	  myctr->run();
+	}
+      } else if (topo->irow % 2 == 1 &&
+		 topo->icol % 2 == 0){
+	MPI_Status stat;
+	{
+	  REAL A11[(n/topo->nrow)*(n/topo->ncol)] __attribute__ ((aligned(16)));
+	  if (topo->ilayer == 0){
+	    MPI_Recv(A11, (n/topo->nrow)*(n/topo->ncol), REAL_MPI, topo->irow-1, TAG0, topo->row, &stat);
+	  }
+	  myctr->A = A11;
+	  myctr->B = A;
+	  myctr->C = A;
+	  myctr->run();
+	}
+	if (topo->ilayer == 0){
+	  MPI_Send(A, (n/topo->nrow)*(n/topo->ncol), REAL_MPI, topo->icol+1, TAG2, topo->col);
+	}
+	{
+	  REAL A22[(n/topo->nrow)*(n/topo->ncol)] __attribute__ ((aligned(16)));
+	  if (topo->ilayer == 0){
+	    MPI_Recv(A22, (n/topo->nrow)*(n/topo->ncol), REAL_MPI, topo->icol+1, TAG5, topo->col, &stat);
+	  }
+	  myctr->A = A;
+	  myctr->B = A22;
+	  myctr->C = A;
+	  myctr->run();
+	}
+	if (topo->ilayer == 0){
+	  MPI_Send(A, (n/topo->nrow)*(n/topo->ncol), REAL_MPI, topo->irow-1, TAG6, topo->row);
+	}
+      } else if (topo->irow % 2 == 0 &&
+		 topo->icol % 2 == 1){
+	MPI_Status stat;
+	{
+	  REAL A11[(n/topo->nrow)*(n/topo->ncol)] __attribute__ ((aligned(16)));
+	  if (topo->ilayer == 0){
+	    MPI_Recv(A11, (n/topo->nrow)*(n/topo->ncol), REAL_MPI, topo->icol-1, TAG1, topo->col, &stat);
+	  }
+	  myctr->A = A;
+	  myctr->B = A11;
+	  myctr->C = A;
+	  myctr->run();
+	}
+	if (topo->ilayer == 0){
+	  MPI_Send(A, (n/topo->nrow)*(n/topo->ncol), REAL_MPI, topo->irow+1, TAG3, topo->row);
+	}
+	{
+	  REAL A22[(n/topo->nrow)*(n/topo->ncol)] __attribute__ ((aligned(16)));
+	  if (topo->ilayer == 0){
+	    MPI_Recv(A22, (n/topo->nrow)*(n/topo->ncol), REAL_MPI, topo->irow+1, TAG4, topo->row, &stat);
+	  }
+	  myctr->A = A22;
+	  myctr->B = A;
+	  myctr->C = A;
+	  myctr->run();
+	}
+	if (topo->ilayer == 0){
+	  MPI_Send(A, (n/topo->nrow)*(n/topo->ncol), REAL_MPI, topo->icol-1, TAG7, topo->col);
+	}
+      } else if (topo->irow % 2 == 1 &&
+		 topo->icol % 2 == 1){
+	{
+	  MPI_Status stat12, stat21;
+	  REAL A12[(n/topo->nrow)*(n/topo->ncol)] __attribute__ ((aligned(16)));
+	  REAL A21[(n/topo->nrow)*(n/topo->ncol)] __attribute__ ((aligned(16)));
 
-	MPI_Recv(A12, (n/topo->nrow)*(n/topo->ncol), REAL_MPI, topo->icol-1, TAG2, topo->col, &stat12);
-	MPI_Recv(A21, (n/topo->nrow)*(n/topo->ncol), REAL_MPI, topo->irow-1, TAG3, topo->row, &stat21);
-	myctr->A = A21;
-	myctr->B = A12;
-	myctr->C = A;
-	myctr->run();
+	  if (topo->ilayer == 0){
+	    MPI_Recv(A12, (n/topo->nrow)*(n/topo->ncol), REAL_MPI, topo->icol-1, TAG2, topo->col, &stat12);
+	    MPI_Recv(A21, (n/topo->nrow)*(n/topo->ncol), REAL_MPI, topo->irow-1, TAG3, topo->row, &stat21);
+	  }
+	  myctr->A = A21;
+	  myctr->B = A12;
+	  myctr->C = A;
+	  myctr->run();
+	}
+	blocked_dcapsp(tsub, n/2, b, A, pred_A);
+	if (topo->ilayer == 0){
+	  MPI_Send(A, (n/topo->nrow)*(n/topo->ncol), REAL_MPI, topo->irow-1, TAG4, topo->row);
+	  MPI_Send(A, (n/topo->nrow)*(n/topo->ncol), REAL_MPI, topo->icol-1, TAG5, topo->col);
+	}
       }
-      blocked_dcapsp(tsub, n/2, A, pred_A);
-      MPI_Send(A, (n/topo->nrow)*(n/topo->ncol), REAL_MPI, topo->irow-1, TAG4, topo->row);
-      MPI_Send(A, (n/topo->nrow)*(n/topo->ncol), REAL_MPI, topo->icol-1, TAG5, topo->col);
     }
   }
 }
 
 void cyclic_dcapsp(const topology_t * topo,
 		   const int n,
-		   const int b,
+		   const int b1,
+		   const int b2,
 		   REAL * A,		
-		   int * pred_A = 0){
+		   int * pred_A){
   int nb = n/topo->nrow;
-  if (nb <= b){
-    blocked_dcapsp(topo, n, A, pred_A);
+  if (nb <= b1){
+    blocked_dcapsp(topo, n, -1, A, pred_A);
+  } else if (nb <= b2){
+    blocked_dcapsp(topo, n, b1, A, pred_A);
   } else {
     ctr * myctr = construct_ctr(topo, n/2);
-    myctr->num_lyr = 1;
-    myctr->idx_lyr = 0;
+    //myctr->num_lyr = topo->nlayer;
+    //myctr->idx_lyr = topo->ilayer;
     myctr->buffer = NULL;
 
     REAL sub_A11[nb*nb/4] __attribute__ ((aligned(16)));   
-    lda_cpy(nb/2, nb/2, nb, nb/2, A, sub_A11);
-    cyclic_dcapsp(topo, n/2, b, sub_A11, pred_A);
+    if (topo->ilayer == 0){
+      lda_cpy(nb/2, nb/2, nb, nb/2, A, sub_A11);
+    }
+    cyclic_dcapsp(topo, n/2, b1, b2, sub_A11, pred_A);
 
     REAL sub_A21[nb*nb/4] __attribute__ ((aligned(16)));   
     REAL sub_A12[nb*nb/4] __attribute__ ((aligned(16)));   
     REAL sub_A22[nb*nb/4] __attribute__ ((aligned(16)));   
-    lda_cpy(nb/2, nb/2, nb, nb/2, A+nb/2, sub_A21);
-    lda_cpy(nb/2, nb/2, nb, nb/2, A+nb*nb/2, sub_A12);
-    lda_cpy(nb/2, nb/2, nb, nb/2, A+nb/2+nb*nb/2, sub_A22);
+    if (topo->ilayer == 0){
+      lda_cpy(nb/2, nb/2, nb, nb/2, A+nb/2, sub_A21);
+      lda_cpy(nb/2, nb/2, nb, nb/2, A+nb*nb/2, sub_A12);
+      lda_cpy(nb/2, nb/2, nb, nb/2, A+nb/2+nb*nb/2, sub_A22);
+    }
 	
     myctr->A = sub_A11;
     myctr->B = sub_A12;
@@ -217,7 +279,7 @@ void cyclic_dcapsp(const topology_t * topo,
     myctr->C = sub_A22;
     myctr->run();
 
-    cyclic_dcapsp(topo, n/2, b, sub_A22, pred_A);
+    cyclic_dcapsp(topo, n/2, b1, b2, sub_A22, pred_A);
     
     myctr->A = sub_A12;
     myctr->B = sub_A22;
@@ -233,11 +295,13 @@ void cyclic_dcapsp(const topology_t * topo,
     myctr->B = sub_A21;
     myctr->C = sub_A11;
     myctr->run();
-    
-    lda_cpy(nb/2, nb/2, nb/2, nb, sub_A11, A);
-    lda_cpy(nb/2, nb/2, nb/2, nb, sub_A21, A+nb/2);
-    lda_cpy(nb/2, nb/2, nb/2, nb, sub_A12, A+nb*nb/2);
-    lda_cpy(nb/2, nb/2, nb/2, nb, sub_A22, A+nb/2+nb*nb/2);
+
+    if (topo->ilayer == 0){    
+      lda_cpy(nb/2, nb/2, nb/2, nb, sub_A11, A);
+      lda_cpy(nb/2, nb/2, nb/2, nb, sub_A21, A+nb/2);
+      lda_cpy(nb/2, nb/2, nb/2, nb, sub_A12, A+nb*nb/2);
+      lda_cpy(nb/2, nb/2, nb/2, nb, sub_A22, A+nb/2+nb*nb/2);
+    }
   }
 }
 
@@ -256,10 +320,12 @@ void dcapsp(const topology_t * topo,
 	    const int n,
 	    REAL * A,		
 	    int * pred_A,
-	    const int b){
+	    const int b1,
+	    const int b2){
 
 //  blocked_dcapsp(topo, n, A, pred_A);
-  cyclic_dcapsp(topo, n, b, A, pred_A);
+//  cyclic_dcapsp(topo, n, b, A, pred_A);
+  cyclic_dcapsp(topo, n, b1, b2, A, pred_A);
 
 }
 

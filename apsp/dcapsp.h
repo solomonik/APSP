@@ -38,7 +38,8 @@ void dcapsp(const topology_t * topo,
 	    const int n,
 	    REAL * A,		
 	    int * pred_A = 0,
-	    const int b = 32);
+	    const int b1 = 32,
+	    const int b2 = 256);
 
 
 void floyd_warshall(REAL * A, int const n);

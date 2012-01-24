@@ -119,7 +119,8 @@ class ctr_lyr : public ctr {
     ctr * rec_ctr;
     int k;
     CommData_t * cdt;
-    int sz_C;
+    int sz_A, sz_B, sz_C;
+    MPI_Op red_op;
     
     void run();
     int mem_fp();
@@ -127,7 +128,7 @@ class ctr_lyr : public ctr {
 
     ctr_lyr(ctr * other);
     ~ctr_lyr();
-    ctr_lyr(){}
+    ctr_lyr(){ }
 };
 
 class ctr_fmm : public ctr {

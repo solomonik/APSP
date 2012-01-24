@@ -25,27 +25,35 @@ void read_matrix_block(	int const	n,
 }
 
 void bench_dcapsp(int const	n,
-		  int const	b,
+		  int const	b1,
+		  int const	b2,
+		  int const	crep,
 		  int const	seed,
 		  int const	iter,
 		  int const	rank,
 		  int const	np,
 		  int const	pdim){
-  int i, it;
+  int i, it, trank;
   double t_st, t_end, t_all;
+  MPI_Comm inlayer;
+  
+  trank 	= rank%(np/crep);
 
   topology_t topo;
   topo.world 	= MPI_COMM_WORLD;
-  topo.layer	= MPI_COMM_WORLD;
   topo.nrow 	= pdim;
   topo.ncol 	= pdim;
-  topo.irow 	= rank/pdim;
-  topo.icol 	= rank%pdim;
+  topo.nlayer	= crep;
+  topo.ilayer	= rank/(np/crep);
+  topo.irow 	= trank/pdim;
+  topo.icol 	= trank%pdim;
 
-  MPI_Comm_split(MPI_COMM_WORLD, topo.icol, topo.irow, &topo.row);
-  MPI_Comm_split(MPI_COMM_WORLD, topo.irow, topo.icol, &topo.col);
+  MPI_Comm_split(MPI_COMM_WORLD, trank, topo.ilayer, &topo.layer);
+  MPI_Comm_split(MPI_COMM_WORLD, topo.ilayer, trank, &inlayer);
+  MPI_Comm_split(inlayer, topo.icol, topo.irow, &topo.row);
+  MPI_Comm_split(inlayer, topo.irow, topo.icol, &topo.col);
 
-  REAL A[n*n] __attribute__ ((aligned(16)));
+  REAL A[n*n*crep/np] __attribute__ ((aligned(16)));
 
 
   if (rank == 0)
@@ -54,11 +62,11 @@ void bench_dcapsp(int const	n,
   t_all = 0.0;
   for (it=0; it<iter; it++){
     srand48(seed);
-    for (i=0; i<n*n/np; i++){
+    for (i=0; i<n*n*crep/np; i++){
       A[i] = drand48();
     }
     t_st = TIME_SEC();
-    dcapsp(&topo, n, A, 0, b);
+    dcapsp(&topo, n, A, 0, b1, b2);
     t_end = TIME_SEC();
     t_all += t_end - t_st;
   }
@@ -71,26 +79,36 @@ void bench_dcapsp(int const	n,
 
 
 void test_dcapsp( int const	n,
-		  int const	b,
+		  int const	b1,
+		  int const	b2,
+		  int const	crep,
 		  int const	seed,
 		  int const	rank,
 		  int const	np,
 		  int const	pdim){
-  int i, pass, allpass;
+  int i, pass, allpass, trank;
+  MPI_Comm inlayer;
+  
+  trank 	= rank%(np/crep);
+
   topology_t topo;
   topo.world 	= MPI_COMM_WORLD;
-  topo.layer	= MPI_COMM_WORLD;
   topo.nrow 	= pdim;
   topo.ncol 	= pdim;
-  topo.irow 	= rank/pdim;
-  topo.icol 	= rank%pdim;
+  topo.nlayer	= crep;
+  topo.ilayer	= rank/(np/crep);
+  topo.irow 	= trank/pdim;
+  topo.icol 	= trank%pdim;
 
-  MPI_Comm_split(MPI_COMM_WORLD, topo.icol, topo.irow, &topo.row);
-  MPI_Comm_split(MPI_COMM_WORLD, topo.irow, topo.icol, &topo.col);
+  MPI_Comm_split(MPI_COMM_WORLD, trank, topo.ilayer, &topo.layer);
+  MPI_Comm_split(MPI_COMM_WORLD, topo.ilayer, trank, &inlayer);
+  MPI_Comm_split(inlayer, topo.icol, topo.irow, &topo.row);
+  MPI_Comm_split(inlayer, topo.irow, topo.icol, &topo.col);
+//  printf("[%d] is [%d][%d][%d]\n", rank, topo.irow, topo.icol, topo.ilayer);
 
   REAL * A = (REAL*)malloc(n*n*sizeof(REAL));
-  REAL * sub_A = (REAL*)malloc(n*n*sizeof(REAL)/np);
-  REAL * ans_A = (REAL*)malloc(n*n*sizeof(REAL)/np);
+  REAL * sub_A = (REAL*)malloc(n*n*sizeof(REAL)*crep/np);
+  REAL * ans_A = (REAL*)malloc(n*n*sizeof(REAL)*crep/np);
 
   srand48(seed);
   for (i=0; i<n*n; i++){
@@ -101,25 +119,27 @@ void test_dcapsp( int const	n,
 
   if (rank == 0)
     printf("Testing dcapsp.\n");
-  dcapsp(&topo, n, sub_A, 0, b);
+  dcapsp(&topo, n, sub_A, 0, b1, b2);
 
   if (rank == 0)
     printf("Completed dcapsp.\n");
 
-  floyd_warshall(A, n);
-  read_matrix_block(n, topo.irow, topo.nrow, topo.icol, topo.ncol, A, ans_A);
+  if (topo.ilayer == 0){
+    floyd_warshall(A, n);
+    read_matrix_block(n, topo.irow, topo.nrow, topo.icol, topo.ncol, A, ans_A);
 
-  pass = 1;
-  for (i=0; i<n/np; i++){
-    if (fabs(sub_A[i] - ans_A[i]) > 1.E-6){
-      printf("P[%d][%d] computed A[%d] = %lf, ans_A[%d] = %lf\n",
-	      topo.irow, topo.icol, i, sub_A[i], i, ans_A[i]);
-      pass = 0;
+    pass = 1;
+    for (i=0; i<n/np; i++){
+      if (fabs(sub_A[i] - ans_A[i]) > 1.E-6){
+	printf("P[%d][%d] computed A[%d] = %lf, ans_A[%d] = %lf\n",
+		topo.irow, topo.icol, i, sub_A[i], i, ans_A[i]);
+	pass = 0;
+      }
     }
+    MPI_Reduce(&pass, &allpass, 1, MPI_INT, MPI_SUM, 0, inlayer);
+    if (rank == 0 && allpass == np/crep)
+      printf("Test successful.\n");
   }
-  MPI_Reduce(&pass, &allpass, 1, MPI_INT, MPI_SUM, 0, MPI_COMM_WORLD);
-  if (rank == 0 && allpass == np)
-    printf("Test successful.\n");
 }
 
 /* Defines elsewhere deprecate */
@@ -133,7 +153,7 @@ char* getCmdOption(char ** begin, char ** end, const std::string & option){
 }
 
 int main(int argc, char **argv) {
-  int seed, rank, np, pdim, n, b, test, iter;
+  int seed, rank, np, pdim, n, b1, b2, crep, test, iter;
   int const in_num = argc;
   char ** input_str = argv;
 
@@ -153,10 +173,18 @@ int main(int argc, char **argv) {
     test = atoi(getCmdOption(input_str, input_str+in_num, "-test"));
     if (test < 0 || test > 1) test = 1;
   } else test = 1;
-  if (getCmdOption(input_str, input_str+in_num, "-b")){
-    b = atoi(getCmdOption(input_str, input_str+in_num, "-b"));
-    if (b < 0) b = 32;
-  } else b = 32;
+  if (getCmdOption(input_str, input_str+in_num, "-b1")){
+    b1 = atoi(getCmdOption(input_str, input_str+in_num, "-b1"));
+    if (b1 < 0) b1 = 32;
+  } else b1 = 32;
+  if (getCmdOption(input_str, input_str+in_num, "-b2")){
+    b2 = atoi(getCmdOption(input_str, input_str+in_num, "-b2"));
+    if (b2 < 0) b2 = 32;
+  } else b2 = 32;
+  if (getCmdOption(input_str, input_str+in_num, "-crep")){
+    crep = atoi(getCmdOption(input_str, input_str+in_num, "-crep"));
+    if (crep < 0) crep = 1;
+  } else crep = 1;
   if (getCmdOption(input_str, input_str+in_num, "-n")){
     n = atoi(getCmdOption(input_str, input_str+in_num, "-n"));
     if (n < 0) n = 128;
@@ -166,7 +194,13 @@ int main(int argc, char **argv) {
     if (pdim < 0) pdim = 1;
   } else pdim = 1;
 
-  assert(pdim*pdim == np);
+  if (rank == 0){
+    printf("seed = %d, iter = %d, test = %d, b1 = %d, b2 =%d, crep = %d,\n",
+	    seed, iter, test, b1, b2, crep);
+    printf("n = %d, pdim = %d\n", n, pdim);
+  }
+
+  assert(pdim*pdim*crep == np);
 
 #ifdef TAU
   TAU_PROFILE_TIMER(timer, "main", "int (int, char**)", TAU_USER);
@@ -177,9 +211,9 @@ int main(int argc, char **argv) {
 #endif
 
   if (iter > 0)
-    bench_dcapsp(n, b, seed, iter, rank, np, pdim);
+    bench_dcapsp(n, b1, b2, crep, seed, iter, rank, np, pdim);
   if (test)
-    test_dcapsp(n, b, seed, rank, np, pdim);
+    test_dcapsp(n, b1, b2, crep, seed, rank, np, pdim);
   
   TAU_PROFILE_STOP(timer);
   MPI_Finalize();
