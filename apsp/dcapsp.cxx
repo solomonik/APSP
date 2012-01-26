@@ -83,6 +83,7 @@ void seq_dcapsp(int const 	n,
 		int const	b,
 		REAL *		A,
 		int *		pred_A = 0){
+  printf("b=%d\n",b);
   if (n<=b){
     floyd_warshall(A, n, lda);
   } else {
@@ -106,6 +107,10 @@ void cyclic_dcapsp(const topology_t * topo,
 		   REAL * A,		
 		   int * pred_A = 0);
 
+#ifndef BLKFW
+#define BLKFW 8
+#endif
+
 void blocked_dcapsp(const topology_t * topo,
 		    const int n,
 		    const int b,
@@ -113,7 +118,7 @@ void blocked_dcapsp(const topology_t * topo,
 		    int * pred_A = 0){
   if (topo->nrow == 1 && topo->ncol == 1){
 //    floyd_warshall(A, n);
-    seq_dcapsp(n, n, 8, A, pred_A);
+    seq_dcapsp(n, n, BLKFW, A, pred_A);
   } else if (b != -1 && topo->nlayer == 1) {
     cyclic_dcapsp(topo, n, b, b, A, pred_A);
   } else {
