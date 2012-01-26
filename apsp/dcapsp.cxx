@@ -83,7 +83,6 @@ void seq_dcapsp(int const 	n,
 		int const	b,
 		REAL *		A,
 		int *		pred_A = 0){
-  printf("b=%d\n",b);
   if (n<=b){
     floyd_warshall(A, n, lda);
   } else {
