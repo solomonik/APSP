@@ -8,6 +8,16 @@
  
 #include "fmm.h"
 
+#ifdef BGP
+#include "mpi.h"
+extern "C"{
+void HPM_Init();
+void HPM_Print();
+void HPM_Start(char *);
+void HPM_Stop(char *);
+}
+#endif
+
 void bench_fmm(int const		seed, 
 	       int const		n, 
 	       int const		m, 
@@ -51,6 +61,10 @@ void bench_fmm(int const		seed,
 	      B, lda_B,
 	      C, lda_C);
   }
+#ifdef BGP
+  HPM_Init();
+  HPM_Start("fmm_opt");
+#endif
   tstart = TIME_SEC();
   for (i=0; i<niter; i++){
     fmm_opt  (trans_A, trans_B,
@@ -63,6 +77,10 @@ void bench_fmm(int const		seed,
   printf("benchmark complete.\n");
   printf("Performed %d iterations at %lf sec/iter, achieving a flop/flops rate of %lf GF.\n",
 	  niter, (tend-tstart)/niter, (2.*n*m*k*niter*1.E-9)/(tend-tstart));
+#ifdef BGP
+  HPM_Stop("fmm_opt");
+  HPM_Print();
+#endif
 }
  
 void test_fmm(int const		seed, 
@@ -162,6 +180,9 @@ int main(int argc, char ** argv){
   
   int const in_num = argc;
   char ** input_str = argv;
+#ifdef BGP
+  MPI_Init(&argc, &argv);
+#endif
 
  /* MPI_Init(&argc, &argv);
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);*/
@@ -233,6 +254,8 @@ int main(int argc, char ** argv){
   test_fmm(seed, n, m, k, trans_A, trans_B, lda_A, lda_B, lda_C);
 #endif
 
-//  MPI_Finalize();
+#ifdef BGP
+  MPI_Finalize();
+#endif
   return 0;
 }

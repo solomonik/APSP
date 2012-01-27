@@ -2,16 +2,35 @@
 #include <stdlib.h>
 #include <string.h>
 #include <string>
-#include <xmmintrin.h>
 #include <algorithm>
 #include <math.h>
 #include <limits.h>
 #include <float.h>
+#ifndef BGP
+#include <xmmintrin.h>
+#else
+#include <builtins.h>
+#endif
 
 #include "fmm.h"
 
 #ifndef THREADED
-#define THREADED	1
+#define THREADED	0
+#endif
+
+#ifdef BGP
+#define TBLKN	1
+#define TBLKM	1
+#define CACHE_HOP_SIZE 256
+#define BLOCK_SIZE_M 30
+#define BLOCK_SIZE_N 30
+#define BLOCK_SIZE_K 80
+#define RBM 2
+#define RBN 2
+#define RBK 8
+#define L2M 120
+#define L2N 120
+#define L2K 160
 #endif
 
 #ifdef HOPPER
@@ -31,7 +50,7 @@
 
 #if THREADED
 #ifndef TBLKN
-#define TBLKN	3
+#define TBLKN	2
 #endif
 #ifndef TBLKM
 #define TBLKM	2
@@ -70,7 +89,7 @@
 
 
 #ifndef RBN
-#define RBN 4
+#define RBN 2
 #endif
 
 #ifndef RBK
@@ -82,10 +101,27 @@
 #endif
 
 
-
+#ifdef BGP
+#define MAX_VAL		DBL_MAX
+static double max_vals[2] = { DBL_MAX, DBL_MAX };
+static  double stripe_dbls[2] = { -1., 1. };
+__complex__ double stripe_vals;
+#define LOAD		__lfpd
+#define STORE		__stfpd
+#define IOUTER_OP(a,b,c)	__fpmadd(a,b,c) 
+#define OUTER_OP(a,b)	__fpadd(a,b) 
+//__fpsel(__fpsub(a, b), a, b);
+//#define INNER_OP(a,b)	_mm_max_pd(b,_mm_max_pd(a,_mm_add_pd(a,b)))
+#define INNER_OP(a,b)	(a,b)
+//__fpmul(a,b)
+#define SET_INIT()	__lfpd(max_vals)
+#define __m128t		__complex__ double
+#define SWIDTH		2
+#else
 #if (PRECISION==1)
 #define MAX_VAL		FLT_MAX
 #define LOAD		_mm_load_ps
+#define STORE		_mm_store_ps
 #define OUTER_OP	_mm_min_ps
 #define INNER_OP(a,b)	_mm_max_ps(b,_mm_max_ps(a,_mm_add_ps(a,b)))
 #define SET_INIT()	_mm_set1_ps(MAX_VAL)
@@ -96,12 +132,14 @@
 #if (PRECISION==2)
 #define MAX_VAL		DBL_MAX
 #define LOAD		_mm_load_pd
+#define STORE		_mm_store_pd
 #define OUTER_OP	_mm_min_pd
 //#define INNER_OP(a,b)	_mm_max_pd(b,_mm_max_pd(a,_mm_add_pd(a,b)))
 #define INNER_OP(a,b)	_mm_add_pd(a,b)
 #define SET_INIT()	_mm_set1_pd(MAX_VAL)
 #define __m128t		__m128d
 #define SWIDTH		2
+#endif
 #endif
 
 
@@ -115,7 +153,7 @@
   #define LOAD_ROW_B(jb) \
     B_##jb##_0 = LOAD(B+k+0+(j+(jb))*ldk);
   #define MUL_ROW_A_B(ib, jb) \
-    C_##jb##_##ib = OUTER_OP(C_##jb##_##ib,INNER_OP(A_##ib##_0,B_##jb##_0)); 
+    C_##jb##_##ib = IOUTER_OP(C_##jb##_##ib,A_##ib##_0,B_##jb##_0); 
 #endif
 
 #if (RBK==4)
@@ -132,8 +170,8 @@
     B_##jb##_0 = ((__m128t *)(B+k+0*SWIDTH+(j+(jb))*ldk))[0]; \
     B_##jb##_1 = ((__m128t *)(B+k+1*SWIDTH+(j+(jb))*ldk))[0];
   #define MUL_ROW_A_B(ib, jb) \
-    C_##jb##_##ib = OUTER_OP(C_##jb##_##ib, INNER_OP(A_##ib##_0,B_##jb##_0)); \
-    C_##jb##_##ib = OUTER_OP(C_##jb##_##ib, INNER_OP(A_##ib##_1,B_##jb##_1));
+    C_##jb##_##ib = IOUTER_OP(C_##jb##_##ib,A_##ib##_0,B_##jb##_0); \
+    C_##jb##_##ib = IOUTER_OP(C_##jb##_##ib,A_##ib##_1,B_##jb##_1);
 #endif    
 
 #if (RBK==8)
@@ -155,10 +193,10 @@
     B_##jb##_3 = ((__m128t *)(B+k+3*SWIDTH+(j+(jb))*ldk))[0];
 
   #define MUL_ROW_A_B(ib, jb) \
-    C_##jb##_##ib = OUTER_OP(C_##jb##_##ib, INNER_OP(A_##ib##_0,B_##jb##_0)); \
-    C_##jb##_##ib = OUTER_OP(C_##jb##_##ib, INNER_OP(A_##ib##_1,B_##jb##_1)); \
-    C_##jb##_##ib = OUTER_OP(C_##jb##_##ib, INNER_OP(A_##ib##_2,B_##jb##_2)); \
-    C_##jb##_##ib = OUTER_OP(C_##jb##_##ib, INNER_OP(A_##ib##_3,B_##jb##_3));
+    C_##jb##_##ib = IOUTER_OP(C_##jb##_##ib,A_##ib##_0,B_##jb##_0); \
+    C_##jb##_##ib = IOUTER_OP(C_##jb##_##ib,A_##ib##_1,B_##jb##_1); \
+    C_##jb##_##ib = IOUTER_OP(C_##jb##_##ib,A_##ib##_2,B_##jb##_2); \
+    C_##jb##_##ib = IOUTER_OP(C_##jb##_##ib,A_##ib##_3,B_##jb##_3);
 #endif    
 
 
@@ -227,20 +265,32 @@
     C_1_##ib = LOAD(C+j+0+(i+(ib))*ldn); \
     C_1_##ib = OUTER_OP(C_1_##ib,C_0_##ib); \
     C_1_##ib = OUTER_OP(C_1_##ib,C_swap_##ib); \
-    _mm_store_pd(C+j+0+(i+(ib))*ldn, C_1_##ib); 
+    STORE(C+j+0+(i+(ib))*ldn, C_1_##ib); 
 #endif
  
 #if (PRECISION==2) 
   #define INIT_ROW_C(ib) \
     __m128t C_0_##ib; __m128t C_1_##ib; \
     __m128t C_swap_##ib; 
+#ifdef BGP
+  #define STORE_ROW_C(ib) \
+    C_swap_##ib = __fxmr(C_0_##ib); \
+    C_0_##ib = OUTER_OP(C_0_##ib,C_swap_##ib); \
+    C_swap_##ib = __fxmr(C_1_##ib); \
+    C_1_##ib = OUTER_OP(C_1_##ib,C_swap_##ib); \
+    C_swap_##ib = __fpsel(stripe_vals,C_0_##ib,C_1_##ib); \
+    C_1_##ib = LOAD(C+j+0+(i+(ib))*ldn); \
+    C_1_##ib = OUTER_OP(C_1_##ib,C_swap_##ib); \
+    STORE(C+j+0+(i+(ib))*ldn, C_1_##ib); 
+#else
   #define STORE_ROW_C(ib) \
     C_swap_##ib = _mm_unpacklo_pd(C_0_##ib, C_1_##ib); \
     C_0_##ib = _mm_unpackhi_pd(C_0_##ib, C_1_##ib); \
     C_1_##ib = LOAD(C+j+0+(i+(ib))*ldn); \
     C_1_##ib = OUTER_OP(C_1_##ib,C_0_##ib); \
     C_1_##ib = OUTER_OP(C_1_##ib,C_swap_##ib); \
-    _mm_store_pd(C+j+0+(i+(ib))*ldn, C_1_##ib); 
+    STORE(C+j+0+(i+(ib))*ldn, C_1_##ib); 
+#endif
 #endif
 
   #define MUL_SQUARE_A_B(ib) \
@@ -281,7 +331,7 @@
     C_2_##ib = LOAD(C+j+0+(i+(ib))*ldn); \
     C_3_##ib = _mm_unpacklo_ps(C_0_##ib, C_1_##ib); \
     C_1_##ib = OUTER_OP(C_3_##ib,C_2_##ib); \
-    _mm_store_ps(C+j+0+(i+(ib))*ldn, C_1_##ib); 
+    STORE(C+j+0+(i+(ib))*ldn, C_1_##ib); 
 #endif
 
 #if (PRECISION==2)
@@ -291,13 +341,13 @@
     C_1_##ib = LOAD(C+j+0+(i+(ib))*ldn); \
     C_1_##ib = OUTER_OP(C_1_##ib,C_0_##ib); \
     C_1_##ib = OUTER_OP(C_1_##ib,C_swap_0_##ib); \
-    _mm_store_pd(C+j+0+(i+(ib))*ldn, C_1_##ib); \
+    STORE(C+j+0+(i+(ib))*ldn, C_1_##ib); \
     C_swap_1_##ib = _mm_unpacklo_pd(C_2_##ib, C_3_##ib); \
     C_2_##ib = _mm_unpackhi_pd(C_2_##ib, C_3_##ib); \
     C_3_##ib = LOAD(C+j+2+(i+(ib))*ldn); \
     C_3_##ib = OUTER_OP(C_3_##ib,C_2_##ib); \
     C_3_##ib = OUTER_OP(C_3_##ib,C_swap_1_##ib); \
-    _mm_store_pd(C+j+2+(i+(ib))*ldn, C_3_##ib); 
+    STORE(C+j+2+(i+(ib))*ldn, C_3_##ib); 
 #endif
 
 
@@ -371,7 +421,10 @@ inline static void blk_transp(REAL * block,
   }
 }
 
+
+#ifndef BGP
 #pragma safeptr=all
+#endif
 inline static void do_block(int const ldm, 
 			    int const ldn,
 			    int const ldk,
@@ -382,6 +435,7 @@ inline static void do_block(int const ldm,
 			    REAL const *B,
 			    REAL *  C,
 			    int const full_KN){
+
 
   int const mm = (M/RBM + (M%RBM > 0))*RBM;
   int const nn = (N/RBN + (N%RBN > 0))*RBN;
@@ -396,10 +450,18 @@ inline static void do_block(int const ldm,
 
   if (full_KN == 3){
     for (i = 0; i < mm; i+= RBM){
+#ifndef BGP
       #pragma unroll BLOCK_SIZE_N/RBN
+#else
+      #pragma unroll
+#endif
       for (j = 0; j < nn; j+= RBN){
 	LOAD_C;
+#ifndef BGP
 	#pragma unroll BLOCK_SIZE_K/RBK
+#else
+      #pragma unroll
+#endif
 	for (k = 0; k < BLOCK_SIZE_K; k+= RBK){
 	  LOAD_A;
 	  LOAD_B;
@@ -412,7 +474,11 @@ inline static void do_block(int const ldm,
     for (i = 0; i < mm; i+= RBM){
       for (j = 0; j < nn; j+= RBN){
 	LOAD_C;
+#ifndef BGP
 	#pragma unroll BLOCK_SIZE_K/RBK
+#else
+      #pragma unroll
+#endif
 	for (k = 0; k < BLOCK_SIZE_K; k+= RBK){
 	  LOAD_A;
 	  LOAD_B;
@@ -425,7 +491,11 @@ inline static void do_block(int const ldm,
     for (i = 0; i < mm; i+= RBM){
       for (j = 0; j < nn; j+= RBN){
 	LOAD_C;
+#ifndef BGP
 	#pragma unroll
+#else
+      #pragma unroll
+#endif
 	for (k = 0; k < kk; k+= RBK){
 	  LOAD_A;
 	  LOAD_B;
@@ -446,6 +516,9 @@ void fmm_opt( 	const char trans_A,	const char trans_B,
   int mpad, npad, kpad;
   mpad = m, npad = n, kpad = k;
 
+#ifdef BGP
+  stripe_vals = __lfpd(stripe_dbls);
+#endif
   
   const REAL inf = std::numeric_limits<REAL>::max();
 
