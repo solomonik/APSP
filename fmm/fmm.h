@@ -69,8 +69,8 @@ static double __timer(){
 #define TAU_PROFILE_TIMER(ARG1, ARG2, ARG3, ARG4)
 #define TAU_PROFILE_STOP(ARG)
 #define TAU_PROFILE_START(ARG)
-#define TAU_FSTART(ARG) MPI_Pcontrol(1, #ARG)
-#define TAU_FSTOP(ARG) MPI_Pcontrol(-1, #ARG)
+#define TAU_FSTART(ARG) 
+#define TAU_FSTOP(ARG) 
 #endif
 
 

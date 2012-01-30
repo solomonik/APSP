@@ -47,6 +47,7 @@ void bench_dcapsp(int const	n,
   topo.ilayer	= rank/(np/crep);
   topo.irow 	= trank/pdim;
   topo.icol 	= trank%pdim;
+  topo.tsub	= NULL;
 
   MPI_Comm_split(MPI_COMM_WORLD, trank, topo.ilayer, &topo.layer);
   MPI_Comm_split(MPI_COMM_WORLD, topo.ilayer, trank, &inlayer);
@@ -99,6 +100,7 @@ void test_dcapsp( int const	n,
   topo.ilayer	= rank/(np/crep);
   topo.irow 	= trank/pdim;
   topo.icol 	= trank%pdim;
+  topo.tsub 	= NULL;
 
   MPI_Comm_split(MPI_COMM_WORLD, trank, topo.ilayer, &topo.layer);
   MPI_Comm_split(MPI_COMM_WORLD, topo.ilayer, trank, &inlayer);

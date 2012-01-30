@@ -19,6 +19,7 @@ typedef struct topology {
   MPI_Comm layer;
   int nrow, ncol, nlayer;
   int irow, icol, ilayer;
+  struct topology * tsub;
 } topology_t;
 
 void split_topo(topology_t const * tparent,
@@ -34,7 +35,7 @@ void split_topo(topology_t const * tparent,
  * \param[in,out] pred_A predecessors of A on input and output (ignored if NULL, 0)
  * \param[in] b is the blocking factor for when to switch from cyclic to blocked
  */
-void dcapsp(const topology_t * topo,
+void dcapsp(topology_t * topo,
 	    const int n,
 	    REAL * A,		
 	    int * pred_A = 0,

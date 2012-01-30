@@ -3,10 +3,11 @@
 #include "../fmm/fmm.h"
 #include "../ctr_comm/ctr_comm.h"
 
-void split_topo(topology_t const * tparent,
+void split_topo(topology_t * tparent,
 		topology_t * tsub){
   ASRT(tparent->nrow%2 == 0);
   ASRT(tparent->ncol%2 == 0);
+  printf("constructing new topo\n");
 
   tsub->ilayer 	= tparent->ilayer/2;  
   tsub->nlayer 	= MAX(1,tparent->nlayer/2);
@@ -22,6 +23,9 @@ void split_topo(topology_t const * tparent,
     MPI_Comm_split(tparent->layer, tparent->ilayer%2, tsub->ilayer, &tsub->layer);
   else
     tsub->layer = tparent->layer;
+
+  tparent->tsub = tsub;
+  tsub->tsub	= NULL;
 }
 
 ctr * construct_ctr(const topology_t * topo,
@@ -99,7 +103,7 @@ void seq_dcapsp(int const 	n,
   }  
 }
 
-void cyclic_dcapsp(const topology_t * topo,
+void cyclic_dcapsp(topology_t * topo,
 		   const int n,
 		   const int b1,
 		   const int b2,
@@ -110,7 +114,7 @@ void cyclic_dcapsp(const topology_t * topo,
 #define BLKFW 64
 #endif
 
-void blocked_dcapsp(const topology_t * topo,
+void blocked_dcapsp(topology_t * topo,
 		    const int n,
 		    const int b,
 		    REAL * A,		
@@ -124,9 +128,11 @@ void blocked_dcapsp(const topology_t * topo,
     //printf("n=%d, nrow = %d, ncol = %d\n",n,topo->nrow, topo->ncol);
     topology_t * tsub;
     ctr * myctr;
-    tsub = (topology_t*)malloc(sizeof(topology_t));
+    if (topo->tsub == NULL){
+      tsub = (topology_t*)malloc(sizeof(topology_t));
 
-    split_topo(topo, tsub);
+      split_topo(topo, tsub);
+    } else tsub = topo->tsub;
     myctr = construct_ctr(tsub, n/2);
     myctr->buffer = NULL;
 
@@ -236,7 +242,7 @@ void blocked_dcapsp(const topology_t * topo,
   }
 }
 
-void cyclic_dcapsp(const topology_t * topo,
+void cyclic_dcapsp(topology_t * topo,
 		   const int n,
 		   const int b1,
 		   const int b2,
@@ -320,7 +326,7 @@ void cyclic_dcapsp(const topology_t * topo,
  * \param[in,out] pred_A predecessors of A on input and output (ignored if NULL, 0)
  * \param[in] b is the blocking factor for when to switch from cyclic to blocked
  */
-void dcapsp(const topology_t * topo,
+void dcapsp(topology_t * topo,
 	    const int n,
 	    REAL * A,		
 	    int * pred_A,
