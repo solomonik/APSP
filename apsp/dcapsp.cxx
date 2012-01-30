@@ -107,7 +107,7 @@ void cyclic_dcapsp(const topology_t * topo,
 		   int * pred_A = 0);
 
 #ifndef BLKFW
-#define BLKFW 8
+#define BLKFW 64
 #endif
 
 void blocked_dcapsp(const topology_t * topo,

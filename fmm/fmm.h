@@ -55,6 +55,24 @@ static double __timer(){
 #define TIME_SEC() __timer()
 #endif
 
+#ifdef TAU
+#include <Profile/Profiler.h>
+#define TAU_FSTART(ARG)					\
+    TAU_PROFILE_TIMER(timer##ARG, #ARG, "", TAU_USER);	\
+    TAU_PROFILE_START(timer##ARG)
+
+#define TAU_FSTOP(ARG)					\
+    TAU_PROFILE_STOP(timer##ARG)
+
+#else
+#define TAU_PROFILE(NAME,ARG,USER)
+#define TAU_PROFILE_TIMER(ARG1, ARG2, ARG3, ARG4)
+#define TAU_PROFILE_STOP(ARG)
+#define TAU_PROFILE_START(ARG)
+#define TAU_FSTART(ARG) MPI_Pcontrol(1, #ARG)
+#define TAU_FSTOP(ARG) MPI_Pcontrol(-1, #ARG)
+#endif
+
 
 void fmm_naive( const char trans_A,	const char trans_B,
 		const int m,		const int n,		const int k,		
