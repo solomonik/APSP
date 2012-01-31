@@ -9,14 +9,14 @@
 #include "../shared/util.h"
 
 
-void read_matrix_block(	int const	n,
-			int const	irow,
-			int const	nrow,
-			int const	icol,
-			int const	ncol,
+void read_matrix_block(	int64_t const	n,
+			int64_t const	irow,
+			int64_t const	nrow,
+			int64_t const	icol,
+			int64_t const	ncol,
 			REAL const *	A,
 			REAL *		sub_A){
-  int i, j;
+  int64_t i, j;
   for (i=0; i<n/nrow; i++){
     for (j=0; j<n/ncol; j++){
       sub_A[i*n/ncol+j] = A[(irow*n/nrow+i)*n+(icol*n/ncol+j)];
@@ -24,16 +24,16 @@ void read_matrix_block(	int const	n,
   }
 }
 
-void bench_dcapsp(int const	n,
-		  int const	b1,
-		  int const	b2,
-		  int const	crep,
-		  int const	seed,
-		  int const	iter,
-		  int const	rank,
-		  int const	np,
-		  int const	pdim){
-  int i, it, trank;
+void bench_dcapsp(int64_t const	n,
+		  int64_t const	b1,
+		  int64_t const	b2,
+		  int64_t const	crep,
+		  int64_t const	seed,
+		  int64_t const	iter,
+		  int64_t const	rank,
+		  int64_t const	np,
+		  int64_t const	pdim){
+  int64_t i, it, trank;
   double t_st, t_end, t_all;
   MPI_Comm inlayer;
   
@@ -73,21 +73,21 @@ void bench_dcapsp(int const	n,
   }
 
   if (rank == 0){
-    printf("Completed %d iterations of dcapsp.\n", iter);
+    printf("Completed %lld iterations of dcapsp.\n", iter);
     printf("%lf seconds per iteration, %lf Gigaflops (GF)\n", t_all, 2.E-9*n*n*n*iter/t_all);
   }
 }
 
 
-void test_dcapsp( int const	n,
-		  int const	b1,
-		  int const	b2,
-		  int const	crep,
-		  int const	seed,
-		  int const	rank,
-		  int const	np,
-		  int const	pdim){
-  int i, pass, allpass, trank;
+void test_dcapsp( int64_t const	n,
+		  int64_t const	b1,
+		  int64_t const	b2,
+		  int64_t const	crep,
+		  int64_t const	seed,
+		  int64_t const	rank,
+		  int64_t const	np,
+		  int64_t const	pdim){
+  int64_t i, pass, allpass, trank;
   MPI_Comm inlayer;
   
   trank 	= rank%(np/crep);
@@ -133,7 +133,7 @@ void test_dcapsp( int const	n,
     pass = 1;
     for (i=0; i<n/np; i++){
       if (fabs(sub_A[i] - ans_A[i]) > 1.E-6){
-	printf("P[%d][%d] computed A[%d] = %lf, ans_A[%d] = %lf\n",
+	printf("P[%d][%d] computed A[%lld] = %lf, ans_A[%lld] = %lf\n",
 		topo.irow, topo.icol, i, sub_A[i], i, ans_A[i]);
 	pass = 0;
       }
@@ -155,13 +155,16 @@ char* getCmdOption(char ** begin, char ** end, const std::string & option){
 }
 
 int main(int argc, char **argv) {
-  int seed, rank, np, pdim, n, b1, b2, crep, test, iter;
+  int irank, inp;
+  int64_t rank, np, seed, pdim, n, b1, b2, crep, test, iter;
   int const in_num = argc;
   char ** input_str = argv;
 
   MPI_Init(&argc, &argv);
-  MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-  MPI_Comm_size(MPI_COMM_WORLD, &np);
+  MPI_Comm_rank(MPI_COMM_WORLD, &irank);
+  MPI_Comm_size(MPI_COMM_WORLD, &inp);
+  rank = (int64_t)irank;
+  np = (int64_t)inp;
 
   if (getCmdOption(input_str, input_str+in_num, "-seed")){
     seed = atoi(getCmdOption(input_str, input_str+in_num, "-seed"));
@@ -197,9 +200,9 @@ int main(int argc, char **argv) {
   } else pdim = 1;
 
   if (rank == 0){
-    printf("seed = %d, iter = %d, test = %d, b1 = %d, b2 =%d, crep = %d,\n",
+    printf("seed = %lld, iter = %lld, test = %lld, b1 = %lld, b2 =%lld, crep = %lld,\n",
 	    seed, iter, test, b1, b2, crep);
-    printf("n = %d, pdim = %d\n", n, pdim);
+    printf("n = %lld, pdim = %lld\n", n, pdim);
   }
 
   assert(pdim*pdim*crep == np);

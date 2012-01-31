@@ -28,7 +28,7 @@ void split_topo(topology_t * tparent,
 }
 
 ctr * construct_ctr(const topology_t * topo,
-		    const int n){
+		    const int64_t n){
   CommData_t * cdt_x, * cdt_y, * cdt_lyr;
   ASRT(topo->nrow == topo->ncol);
 
@@ -81,9 +81,9 @@ ctr * construct_ctr(const topology_t * topo,
 #define TAG6 16
 #define TAG7 17
 
-void seq_dcapsp(int const 	n,
-		int const	lda,
-		int const	b,
+void seq_dcapsp(int64_t const 	n,
+		int64_t const	lda,
+		int64_t const	b,
 		REAL *		A,
 		int *		pred_A = 0){
   if (n<=b){
@@ -103,9 +103,9 @@ void seq_dcapsp(int const 	n,
 }
 
 void cyclic_dcapsp(topology_t * topo,
-		   const int n,
-		   const int b1,
-		   const int b2,
+		   const int64_t n,
+		   const int64_t b1,
+		   const int64_t b2,
 		   REAL * A,		
 		   int * pred_A = 0);
 
@@ -114,8 +114,8 @@ void cyclic_dcapsp(topology_t * topo,
 #endif
 
 void blocked_dcapsp(topology_t * topo,
-		    const int n,
-		    const int b,
+		    const int64_t n,
+		    const int64_t b,
 		    REAL * A,		
 		    int * pred_A = 0){
   if (topo->nrow == 1 && topo->ncol == 1){
@@ -242,12 +242,12 @@ void blocked_dcapsp(topology_t * topo,
 }
 
 void cyclic_dcapsp(topology_t * topo,
-		   const int n,
-		   const int b1,
-		   const int b2,
+		   const int64_t n,
+		   const int64_t b1,
+		   const int64_t b2,
 		   REAL * A,		
 		   int * pred_A){
-  int nb = n/topo->nrow;
+  int64_t nb = n/topo->nrow;
   if (nb <= b1){
     blocked_dcapsp(topo, n, -1, A, pred_A);
   } else if (nb <= b2){
@@ -326,11 +326,11 @@ void cyclic_dcapsp(topology_t * topo,
  * \param[in] b is the blocking factor for when to switch from cyclic to blocked
  */
 void dcapsp(topology_t * topo,
-	    const int n,
+	    const int64_t n,
 	    REAL * A,		
 	    int * pred_A,
-	    const int b1,
-	    const int b2){
+	    const int64_t b1,
+	    const int64_t b2){
 
 //  blocked_dcapsp(topo, n, A, pred_A);
 //  cyclic_dcapsp(topo, n, b, A, pred_A);
@@ -338,8 +338,8 @@ void dcapsp(topology_t * topo,
 
 }
 
-void floyd_warshall(REAL * A, int const n){
-  int i,j,k;
+void floyd_warshall(REAL * A, int64_t const n){
+  int64_t i,j,k;
   TAU_FSTART(floyd_warshall);
   
   for (k=0; k<n; k++){
@@ -353,8 +353,8 @@ void floyd_warshall(REAL * A, int const n){
 }
 
 
-void floyd_warshall(REAL * A, int const n, int const lda){
-  int i,j,k;
+void floyd_warshall(REAL * A, int64_t const n, int64_t const lda){
+  int64_t i,j,k;
   TAU_FSTART(floyd_warshall);
   
   for (k=0; k<n; k++){

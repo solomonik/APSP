@@ -36,14 +36,14 @@ void split_topo(topology_t const * tparent,
  * \param[in] b is the blocking factor for when to switch from cyclic to blocked
  */
 void dcapsp(topology_t * topo,
-	    const int n,
+	    const int64_t n,
 	    REAL * A,		
 	    int * pred_A = 0,
-	    const int b1 = 32,
-	    const int b2 = 256);
+	    const int64_t b1 = 32,
+	    const int64_t b2 = 256);
 
 
-void floyd_warshall(REAL * A, int const n);
-void floyd_warshall(REAL * A, int const n, int const lda);
+void floyd_warshall(REAL * A, int64_t const n);
+void floyd_warshall(REAL * A, int64_t const n, int64_t const lda);
 
 #endif
