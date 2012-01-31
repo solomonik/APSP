@@ -7,7 +7,6 @@ void split_topo(topology_t * tparent,
 		topology_t * tsub){
   ASRT(tparent->nrow%2 == 0);
   ASRT(tparent->ncol%2 == 0);
-  printf("constructing new topo\n");
 
   tsub->ilayer 	= tparent->ilayer/2;  
   tsub->nlayer 	= MAX(1,tparent->nlayer/2);

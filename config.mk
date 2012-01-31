@@ -1,14 +1,14 @@
-CC	= mpicxx
-CXX	= mpicxx
+CC	= CC
+CXX	= CC
 #CFLAGS  = -g -O0 $(DFLAGS)
 OPENMP = -fopenmp
-CFLAGS = -O3 -msse4.2 -msse4 -msse2 -DUSE_OMP $(OPENMP) $(DFLAGS)
-LIBS    = -lblas -llapack $(OPENMP)
+CFLAGS = -O4 -DUSE_OMP -DHOPPER $(DFLAGS) $(OPENMP)
+LIBS    = $(OPENMP) 
 
-ifneq (,$(findstring DTAU,$(DFLAGS)))
+ifneq (,$(findstring DTAU,$(CFLAGS)))
         include  $(TAUROOTDIR)/include/Makefile
         CFLAGS+=$(TAU_INCLUDE) $(TAU_DEFS) 
-#       LIBS+=$(TAU_MPI_LIBS) $(TAU_LIBS) 
+#        LIBS+=$(TAU_MPI_LIBS) $(TAU_LIBS) 
         LIBS+= $(TAU_LIBS)
 endif
 
