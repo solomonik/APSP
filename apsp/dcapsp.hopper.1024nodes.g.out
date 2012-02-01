@@ -1,0 +1,134 @@
+ModuleCmd_Switch.c(172):ERROR:152: Module 'openmpi' is currently not loaded
+ModuleCmd_Switch.c(172):ERROR:152: Module 'openmpi' is currently not loaded
+seed = 3, iter = 3, test = 0, b1 = 8, b2 =8, crep = 1,
+n = 4096, pdim = 64
+Benchmarking dcapsp.
+Completed 3 iterations of dcapsp.
+5.637204 seconds per iteration, 73.142084 Gigaflops (GF)
+Application 5537300 resources: utime ~22528s, stime ~3073s
+seed = 3, iter = 3, test = 0, b1 = 16, b2 =16, crep = 1,
+n = 8192, pdim = 64
+Benchmarking dcapsp.
+Completed 3 iterations of dcapsp.
+6.514880 seconds per iteration, 506.307854 Gigaflops (GF)
+Application 5537303 resources: utime ~26624s, stime ~3361s
+seed = 3, iter = 3, test = 0, b1 = 16, b2 =16, crep = 1,
+n = 16384, pdim = 64
+Benchmarking dcapsp.
+Completed 3 iterations of dcapsp.
+21.087892 seconds per iteration, 1251.347408 Gigaflops (GF)
+Application 5537304 resources: utime ~90505s, stime ~8031s
+seed = 3, iter = 3, test = 0, b1 = 32, b2 =32, crep = 1,
+n = 32768, pdim = 64
+Benchmarking dcapsp.
+Completed 3 iterations of dcapsp.
+59.787779 seconds per iteration, 3530.926162 Gigaflops (GF)
+Application 5537309 resources: utime ~290966s, stime ~10900s
+seed = 3, iter = 3, test = 0, b1 = 8, b2 =8, crep = 4,
+n = 4096, pdim = 32
+Benchmarking dcapsp.
+Completed 3 iterations of dcapsp.
+2.062388 seconds per iteration, 199.922067 Gigaflops (GF)
+Application 5537314 resources: utime ~8240s, stime ~1024s
+seed = 3, iter = 3, test = 0, b1 = 8, b2 =16, crep = 4,
+n = 8192, pdim = 32
+Benchmarking dcapsp.
+Completed 3 iterations of dcapsp.
+4.637801 seconds per iteration, 711.228216 Gigaflops (GF)
+Application 5537315 resources: utime ~20480s, stime ~1105s
+seed = 3, iter = 3, test = 0, b1 = 16, b2 =16, crep = 4,
+n = 16384, pdim = 32
+Benchmarking dcapsp.
+Completed 3 iterations of dcapsp.
+9.434130 seconds per iteration, 2797.107792 Gigaflops (GF)
+Application 5537317 resources: utime ~45078s, stime ~2089s
+seed = 3, iter = 3, test = 0, b1 = 16, b2 =32, crep = 4,
+n = 32768, pdim = 32
+Benchmarking dcapsp.
+Completed 3 iterations of dcapsp.
+33.399259 seconds per iteration, 6320.686186 Gigaflops (GF)
+Application 5537319 resources: utime ~186363s, stime ~3196s
+seed = 3, iter = 3, test = 0, b1 = 8, b2 =16, crep = 16,
+n = 4096, pdim = 16
+Benchmarking dcapsp.
+Completed 3 iterations of dcapsp.
+0.907625 seconds per iteration, 454.281095 Gigaflops (GF)
+Application 5537322 resources: utime ~4096s, stime ~1024s
+seed = 3, iter = 3, test = 0, b1 = 16, b2 =16, crep = 16,
+n = 8192, pdim = 16
+Benchmarking dcapsp.
+Completed 3 iterations of dcapsp.
+3.217159 seconds per iteration, 1025.294244 Gigaflops (GF)
+Application 5537323 resources: utime ~14336s, stime ~1024s
+seed = 3, iter = 3, test = 0, b1 = 16, b2 =32, crep = 16,
+n = 16384, pdim = 16
+Benchmarking dcapsp.
+Completed 3 iterations of dcapsp.
+10.609729 seconds per iteration, 2487.177527 Gigaflops (GF)
+Application 5537324 resources: utime ~50176s, stime ~1024s
+seed = 3, iter = 3, test = 0, b1 = 32, b2 =32, crep = 16,
+n = 32768, pdim = 16
+Benchmarking dcapsp.
+Completed 3 iterations of dcapsp.
+43.370038 seconds per iteration, 4867.559313 Gigaflops (GF)
+Application 5537330 resources: utime ~230405s, stime ~2174s
+seed = 3, iter = 3, test = 0, b1 = 8, b2 =16, crep = 16,
+n = 4096, pdim = 16
+Benchmarking dcapsp.
+Completed 3 iterations of dcapsp.
+0.919806 seconds per iteration, 448.265140 Gigaflops (GF)
+Application 5537336 resources: utime ~4096s, stime ~1024s
+seed = 3, iter = 3, test = 0, b1 = 16, b2 =16, crep = 16,
+n = 8192, pdim = 16
+Benchmarking dcapsp.
+Completed 3 iterations of dcapsp.
+3.211277 seconds per iteration, 1027.172329 Gigaflops (GF)
+Application 5537337 resources: utime ~14336s, stime ~1024s
+seed = 3, iter = 3, test = 0, b1 = 16, b2 =32, crep = 16,
+n = 16384, pdim = 16
+Benchmarking dcapsp.
+Completed 3 iterations of dcapsp.
+10.682604 seconds per iteration, 2470.210397 Gigaflops (GF)
+Application 5537338 resources: utime ~50177s, stime ~1024s
+seed = 3, iter = 3, test = 0, b1 = 32, b2 =32, crep = 16,
+n = 32768, pdim = 16
+Benchmarking dcapsp.
+Completed 3 iterations of dcapsp.
+43.052018 seconds per iteration, 4903.515391 Gigaflops (GF)
+Application 5537340 resources: utime ~229183s, stime ~2186s
+seed = 3, iter = 3, test = 0, b1 = 32, b2 =32, crep = 1,
+n = 65536, pdim = 64
+Benchmarking dcapsp.
+Completed 3 iterations of dcapsp.
+227.860159 seconds per iteration, 7411.782157 Gigaflops (GF)
+Application 5537353 resources: utime ~1322417s, stime ~23151s
+seed = 3, iter = 3, test = 0, b1 = 32, b2 =32, crep = 4,
+n = 65536, pdim = 32
+Benchmarking dcapsp.
+Completed 3 iterations of dcapsp.
+135.813203 seconds per iteration, 12435.093362 Gigaflops (GF)
+Application 5537379 resources: utime ~968845s, stime ~6731s
+seed = 3, iter = 3, test = 0, b1 = 64, b2 =64, crep = 1,
+n = 131072, pdim = 64
+Benchmarking dcapsp.
+Completed 3 iterations of dcapsp.
+1057.080052 seconds per iteration, 12781.244767 Gigaflops (GF)
+Application 5537388 resources: utime ~7604940s, stime ~34800s
+
+ + --------------------------------------------------------------------------
+ +        Job name: script4096_notau.sh
+ +          Job Id: 1226912.sdb
+ +          System: hopper
+ +     Queued Time: Tue Jan 31 18:01:26 2012
+ +      Start Time: Wed Feb  1 00:07:57 2012
+ + Completion Time: Wed Feb  1 00:37:13 2012
+ +            User: abuluc
+ +        MOM Host: nid03840
+ +           Queue: reg_med
+ +  Req. Resources: other=QSUBPID:24423:hopper06,walltime=00:30:00
+ +  Used Resources: cput=00:00:04,mem=5804kb,vmem=39880kb,walltime=00:29:16
+ +     Acct String: m888
+ +   PBS_O_WORKDIR: /global/homes/a/abuluc/apsp-25d/code/apsp
+ +     Submit Args: script4096_notau.sh
+ + --------------------------------------------------------------------------
+
