@@ -57,11 +57,11 @@ static double __timer(){
 
 #ifdef TAU
 #include <Profile/Profiler.h>
-#define TAU_FSTART(ARG)					\
-    TAU_PROFILE_TIMER(timer##ARG, #ARG, "", TAU_USER);	\
+#define TAU_FSTART(ARG)                                 \
+    TAU_PROFILE_TIMER(timer##ARG, #ARG, "", TAU_USER);  \
     TAU_PROFILE_START(timer##ARG)
 
-#define TAU_FSTOP(ARG)					\
+#define TAU_FSTOP(ARG)                                  \
     TAU_PROFILE_STOP(timer##ARG)
 
 #else
@@ -74,19 +74,19 @@ static double __timer(){
 #endif
 
 
-void fmm_naive( const char trans_A,	const char trans_B,
-		const int m,		const int n,		const int k,		
-		const REAL * A,		const int lda_A,
-		const REAL * B,		const int lda_B,
-		      REAL * C,		const int lda_C,
-		const int * pred_A = 0,	int * pred_C = 0,	const int lda_P=1);
+void fmm_naive( const char trans_A,     const char trans_B,
+                const int m,            const int n,            const int k,            
+                const REAL * A,         const int lda_A,
+                const REAL * B,         const int lda_B,
+                      REAL * C,         const int lda_C,
+                const int * pred_A = 0, int * pred_C = 0,       const int lda_P=1);
 
-void fmm_opt( 	const char trans_A,	const char trans_B,
-		const int m,		const int n,		const int k,		
-		const REAL * A,		const int lda_A,
-		const REAL * B,		const int lda_B,
-		      REAL * C,		const int lda_C,
-		const int * pred_A = 0,	int * pred_C = 0,	const int lda_P=1);
+void fmm_opt(   const char trans_A,     const char trans_B,
+                const int m,            const int n,            const int k,            
+                const REAL * A,         const int lda_A,
+                const REAL * B,         const int lda_B,
+                      REAL * C,         const int lda_C,
+                const int * pred_A = 0, int * pred_C = 0,       const int lda_P=1);
 
 
 #endif

@@ -2,7 +2,6 @@
 #include "stdio.h"
 #include <xmmintrin.h>
 #include <algorithm>
-/*In case you're wondering, dgemm stands for Double-precision, GEneral Matrix-Matrix multiplication.*/
 
 const char* dgemm_desc = "Simple blocked dgemm.";
 
@@ -247,9 +246,9 @@ const char* dgemm_desc = "Simple blocked dgemm.";
 
 
 inline static void blk_transp(double * block,
-			      double * new_block,
-			      int const nrow,
-			      int const ncol){
+                              double * new_block,
+                              int const nrow,
+                              int const ncol){
   for (int i = 0; i < ncol; i++){
     for (int j = 0; j < nrow; j++){
       new_block[i*nrow+j]=block[j*ncol+i];
@@ -259,15 +258,15 @@ inline static void blk_transp(double * block,
 
 #pragma safeptr=all
 inline static void do_block(int const ldm, 
-			    int const ldn,
-			    int const ldk,
-			    int const M, 
-			    int const N, 
-			    int const K, 
-			    double const *A, 
-			    double const *B,
-			    double *  C,
-			    int const full_KN){
+                            int const ldn,
+                            int const ldk,
+                            int const M, 
+                            int const N, 
+                            int const K, 
+                            double const *A, 
+                            double const *B,
+                            double *  C,
+                            int const full_KN){
 /* To optimize this, think about loop unrolling and software
     pipelining.  Hint:  For the majority of the matmuls, you
     know exactly how many iterations there are (the block size)...  */
@@ -287,49 +286,49 @@ inline static void do_block(int const ldm,
     for (i = 0; i < mm; i+= RBM){
       #pragma unroll BLOCK_SIZE_N/RBN
       for (j = 0; j < nn; j+= RBN){
-	LOAD_C;
-	#pragma unroll BLOCK_SIZE_K/RBK
-	for (k = 0; k < BLOCK_SIZE_K; k+= RBK){
-	  LOAD_A;
-	  LOAD_B;
-	  MUL_A_B;
-	}
-	STORE_C;
+        LOAD_C;
+        #pragma unroll BLOCK_SIZE_K/RBK
+        for (k = 0; k < BLOCK_SIZE_K; k+= RBK){
+          LOAD_A;
+          LOAD_B;
+          MUL_A_B;
+        }
+        STORE_C;
       }
     }
   } else if (full_KN == 2){
     for (i = 0; i < mm; i+= RBM){
       for (j = 0; j < nn; j+= RBN){
-	LOAD_C;
-	#pragma unroll BLOCK_SIZE_K/RBK
-	for (k = 0; k < BLOCK_SIZE_K; k+= RBK){
-	  LOAD_A;
-	  LOAD_B;
-	  MUL_A_B;
-	}
-	STORE_C;
+        LOAD_C;
+        #pragma unroll BLOCK_SIZE_K/RBK
+        for (k = 0; k < BLOCK_SIZE_K; k+= RBK){
+          LOAD_A;
+          LOAD_B;
+          MUL_A_B;
+        }
+        STORE_C;
       }
     }
   } else{
     for (i = 0; i < mm; i+= RBM){
       for (j = 0; j < nn; j+= RBN){
-	LOAD_C;
-	#pragma unroll
-	for (k = 0; k < kk; k+= RBK){
-	  LOAD_A;
-	  LOAD_B;
-	  MUL_A_B;
-	}
-	STORE_C;
+        LOAD_C;
+        #pragma unroll
+        for (k = 0; k < kk; k+= RBK){
+          LOAD_A;
+          LOAD_B;
+          MUL_A_B;
+        }
+        STORE_C;
       }
     }
   }
 }
 
 void square_dgemm(int lda, 
-		  double *A, 
-		  double *B, 
-		  double *C )
+                  double *A, 
+                  double *B, 
+                  double *C )
 {
   int ldapad = lda;
   if (ldapad % RBM != 0)
@@ -367,22 +366,22 @@ void square_dgemm(int lda,
     /*For each block combination*/
     for( int i2 = 0; i2 < ldapad; i2 += L2M ) {
       for( int j2 = 0; j2 < ldapad; j2 += L2N ) {
-	for( int k2 = 0; k2 < ldapad; k2 += L2K ) {
-	  for( int i = i2; i < min(ldapad,i2+L2M); i += BLOCK_SIZE_M ) {
-	    for( int j = j2; j < min(ldapad,j2+L2N); j += BLOCK_SIZE_N ) {
-	      for( int k = k2; k < min(ldapad,k2+L2K); k += BLOCK_SIZE_K ) {
-		/*This gets the correct block size (for fringe blocks also)*/
-		int M = min( BLOCK_SIZE_M, ldapad-i );
-		int N = min( BLOCK_SIZE_N, ldapad-j );
-		int K = min( BLOCK_SIZE_K, ldapad-k );
-		
-		do_block(ldapad, ldapad, ldapad, M, N, K, 
-			 A_swap+k+i*ldapad, pad_B+k+j*ldapad, pad_C+j+i*ldapad, 
-			 2*(K==BLOCK_SIZE_K)+(N==BLOCK_SIZE_N));
-	      }
-	    }
-	  }
-	}
+        for( int k2 = 0; k2 < ldapad; k2 += L2K ) {
+          for( int i = i2; i < min(ldapad,i2+L2M); i += BLOCK_SIZE_M ) {
+            for( int j = j2; j < min(ldapad,j2+L2N); j += BLOCK_SIZE_N ) {
+              for( int k = k2; k < min(ldapad,k2+L2K); k += BLOCK_SIZE_K ) {
+                /*This gets the correct block size (for fringe blocks also)*/
+                int M = min( BLOCK_SIZE_M, ldapad-i );
+                int N = min( BLOCK_SIZE_N, ldapad-j );
+                int K = min( BLOCK_SIZE_K, ldapad-k );
+                
+                do_block(ldapad, ldapad, ldapad, M, N, K, 
+                         A_swap+k+i*ldapad, pad_B+k+j*ldapad, pad_C+j+i*ldapad, 
+                         2*(K==BLOCK_SIZE_K)+(N==BLOCK_SIZE_N));
+              }
+            }
+          }
+        }
       }
     }
     //double A_swap[lda*lda];
@@ -396,22 +395,22 @@ void square_dgemm(int lda,
     /*For each block combination*/
     for( int i2 = 0; i2 < lda; i2 += L2M ) {
       for( int j2 = 0; j2 < lda; j2 += L2N ) {
-	for( int k2 = 0; k2 < lda; k2 += L2K ) {
-	  for( int i = i2; i < min(lda,i2+L2M); i += BLOCK_SIZE_M ) {
-	    for( int j = j2; j < min(lda,j2+L2N); j += BLOCK_SIZE_N ) {
-	      for( int k = k2; k < min(lda,k2+L2K); k += BLOCK_SIZE_K ) {
-		/*This gets the correct block size (for fringe blocks also)*/
-		int M = min( BLOCK_SIZE_M, lda-i );
-		int N = min( BLOCK_SIZE_N, lda-j );
-		int K = min( BLOCK_SIZE_K, lda-k );
-		
-		do_block(lda, lda, lda, M, N, K, 
-			 A_swap+k+i*lda, B+k+j*lda, C+j+i*lda, 
-			 2*(K==BLOCK_SIZE_K)+(N==BLOCK_SIZE_N));
-	      }
-	    }
-	  }
-	}
+        for( int k2 = 0; k2 < lda; k2 += L2K ) {
+          for( int i = i2; i < min(lda,i2+L2M); i += BLOCK_SIZE_M ) {
+            for( int j = j2; j < min(lda,j2+L2N); j += BLOCK_SIZE_N ) {
+              for( int k = k2; k < min(lda,k2+L2K); k += BLOCK_SIZE_K ) {
+                /*This gets the correct block size (for fringe blocks also)*/
+                int M = min( BLOCK_SIZE_M, lda-i );
+                int N = min( BLOCK_SIZE_N, lda-j );
+                int K = min( BLOCK_SIZE_K, lda-k );
+                
+                do_block(lda, lda, lda, M, N, K, 
+                         A_swap+k+i*lda, B+k+j*lda, C+j+i*lda, 
+                         2*(K==BLOCK_SIZE_K)+(N==BLOCK_SIZE_N));
+              }
+            }
+          }
+        }
       }
     }
     //double A_swap[lda*lda];
@@ -420,4 +419,4 @@ void square_dgemm(int lda,
       memcpy(C+i*lda,A_swap+i*lda, lda*sizeof(double));
     }
   }
-}	
+}       

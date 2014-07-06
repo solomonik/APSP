@@ -18,17 +18,17 @@ void HPM_Stop(char *);
 }
 #endif
 
-void bench_fmm(int const		seed, 
-	       int const		n, 
-	       int const		m, 
-	       int const		k, 
-	       char const		trans_A,
-	       char const		trans_B, 
-	       int const		lda_A, 
-	       int const		lda_B, 
-	       int const		lda_C,
-	       int const		nwarm, 
-	       int const		niter){
+void bench_fmm(int const                seed, 
+               int const                n, 
+               int const                m, 
+               int const                k, 
+               char const               trans_A,
+               char const               trans_B, 
+               int const                lda_A, 
+               int const                lda_B, 
+               int const                lda_C,
+               int const                nwarm, 
+               int const                niter){
   REAL *A,*B,*C;
   int sz_A, sz_B, sz_C, i, j;
   double tstart, tend;
@@ -56,10 +56,10 @@ void bench_fmm(int const		seed,
 
   for (i=0; i<nwarm; i++){
     fmm_opt  (trans_A, trans_B,
-	      m, n, k,
-	      A, lda_A,
-	      B, lda_B,
-	      C, lda_C);
+              m, n, k,
+              A, lda_A,
+              B, lda_B,
+              C, lda_C);
   }
 #ifdef BGP
   HPM_Init();
@@ -68,30 +68,30 @@ void bench_fmm(int const		seed,
   tstart = TIME_SEC();
   for (i=0; i<niter; i++){
     fmm_opt  (trans_A, trans_B,
-	      m, n, k,
-	      A, lda_A,
-	      B, lda_B,
-	      C, lda_C);
+              m, n, k,
+              A, lda_A,
+              B, lda_B,
+              C, lda_C);
   }
   tend = TIME_SEC();
   printf("benchmark complete.\n");
   printf("Performed %d iterations at %lf sec/iter, achieving a flop/flops rate of %lf GF.\n",
-	  niter, (tend-tstart)/niter, (2.*n*m*k*niter*1.E-9)/(tend-tstart));
+          niter, (tend-tstart)/niter, (2.*n*m*k*niter*1.E-9)/(tend-tstart));
 #ifdef BGP
   HPM_Stop("fmm_opt");
   HPM_Print();
 #endif
 }
  
-void test_fmm(int const		seed, 
-	      int const		n, 
-	      int const		m, 
-	      int const		k, 
-	      char const	trans_A,
-	      char const	trans_B, 
-	      int const		lda_A, 
-	      int const		lda_B, 
-	      int const		lda_C){
+void test_fmm(int const         seed, 
+              int const         n, 
+              int const         m, 
+              int const         k, 
+              char const        trans_A,
+              char const        trans_B, 
+              int const         lda_A, 
+              int const         lda_B, 
+              int const         lda_C){
   REAL *A,*B,*C,*ans_C;
   int sz_A, sz_B, sz_C, i, j, pass;
 
@@ -126,33 +126,33 @@ void test_fmm(int const		seed,
   std::fill(ans_C, ans_C+sz_C, 100.0);*/
 
   fmm_naive(trans_A, trans_B,
-	    m, n, k,
-	    A, lda_A,
-	    B, lda_B,
-	    ans_C, lda_C);
+            m, n, k,
+            A, lda_A,
+            B, lda_B,
+            ans_C, lda_C);
   
   fmm_opt  (trans_A, trans_B,
-	    m, n, k,
-	    A, lda_A,
-	    B, lda_B,
-	    C, lda_C);
+            m, n, k,
+            A, lda_A,
+            B, lda_B,
+            C, lda_C);
 
   pass = 1;
   for (i=0; i<n; i++){
     for (j=0; j<m; j++){
       if (fabs(C[i*lda_C+j] - ans_C[i*lda_C+j]) > 1.E-6){
 #if (PRECISION==1)
-	printf("opt_C[%d,%d] = %f, naive_C[%d,%d] = %f\n",
-		i,j,C[i*lda_C+j],
-		i,j,ans_C[i*lda_C+j]);
+        printf("opt_C[%d,%d] = %f, naive_C[%d,%d] = %f\n",
+                i,j,C[i*lda_C+j],
+                i,j,ans_C[i*lda_C+j]);
 #else
-	printf("opt_C[%d,%d] = %lf, naive_C[%d,%d] = %lf\n",
-		i,j,C[i*lda_C+j],
-		i,j,ans_C[i*lda_C+j]);
+        printf("opt_C[%d,%d] = %lf, naive_C[%d,%d] = %lf\n",
+                i,j,C[i*lda_C+j],
+                i,j,ans_C[i*lda_C+j]);
 #endif
-	pass = 0;
-	printf("Optimized fmm incorrect!\n");
-	return;
+        pass = 0;
+        printf("Optimized fmm incorrect!\n");
+        return;
       }
     }
   }
@@ -163,8 +163,8 @@ void test_fmm(int const		seed,
 }
 
 char* getCmdOption(char ** begin, 
-		   char ** end, 
-		   const std::string & option){
+                   char ** end, 
+                   const std::string & option){
   char ** itr = std::find(begin, end, option);
   if (itr != end && ++itr != end){
     return *itr;
@@ -243,9 +243,9 @@ int main(int argc, char ** argv){
   }
 
   printf("Testing funny matrix multiply of size %d-by-%d A and %d-by-%d B\n", 
-	 m, k, k, n);
+         m, k, k, n);
   printf("seed = %d trans_A = %c trans_B = %c lda_A = %d lda_B = %d lda_C = %d\n",
-	  seed, trans_A, trans_B, lda_A, lda_B, lda_C);
+          seed, trans_A, trans_B, lda_A, lda_B, lda_C);
   
 #ifndef NOBENCH
   bench_fmm(seed, n, m, k, trans_A, trans_B, lda_A, lda_B, lda_C, nwarm, niter);

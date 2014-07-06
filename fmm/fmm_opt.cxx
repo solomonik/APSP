@@ -15,12 +15,12 @@
 #include "fmm.h"
 
 #ifndef THREADED
-#define THREADED	1
+#define THREADED        1
 #endif
 
 #ifdef BGP
-#define TBLKN	1
-#define TBLKM	1
+#define TBLKN   1
+#define TBLKM   1
 #define CACHE_HOP_SIZE 256
 #define BLOCK_SIZE_M 30
 #define BLOCK_SIZE_N 30
@@ -34,8 +34,8 @@
 #endif
 
 #ifdef HOPPER
-#define TBLKN	3
-#define TBLKM	2
+#define TBLKN   3
+#define TBLKM   2
 #define CACHE_HOP_SIZE 256
 #define BLOCK_SIZE_M 30
 #define BLOCK_SIZE_N 40
@@ -50,15 +50,15 @@
 
 #if THREADED
 #ifndef TBLKN
-#define TBLKN	2
+#define TBLKN   2
 #endif
 #ifndef TBLKM
-#define TBLKM	2
+#define TBLKM   2
 #endif
 #include "omp.h"
 #else
-#define TBLKN	1
-#define TBLKM	1
+#define TBLKN   1
+#define TBLKM   1
 #endif
 
 #ifndef CACHE_HOP_SIZE
@@ -102,44 +102,44 @@
 
 
 #ifdef BGP
-#define MAX_VAL		DBL_MAX
+#define MAX_VAL         DBL_MAX
 static double max_vals[2] = { DBL_MAX, DBL_MAX };
 static  double stripe_dbls[2] = { -1., 1. };
 __complex__ double stripe_vals;
-#define LOAD		__lfpd
-#define STORE		__stfpd
-#define FUSED_OP(a,b,c)	__fpmadd(a,b,c) 
-#define OUTER_OP(a,b)	__fpadd(a,b)  //__fpsel(__fpsub(a, b), a, b);
-//#define INNER_OP(a,b)	_mm_max_pd(b,_mm_max_pd(a,_mm_add_pd(a,b)))
-//#define INNER_OP(a,b)	(a,b)
+#define LOAD            __lfpd
+#define STORE           __stfpd
+#define FUSED_OP(a,b,c) __fpmadd(a,b,c) 
+#define OUTER_OP(a,b)   __fpadd(a,b)  //__fpsel(__fpsub(a, b), a, b);
+//#define INNER_OP(a,b) _mm_max_pd(b,_mm_max_pd(a,_mm_add_pd(a,b)))
+//#define INNER_OP(a,b) (a,b)
 //__fpmul(a,b)
-#define SET_INIT()	__lfpd(max_vals)
-#define __m128t		__complex__ double
-#define SWIDTH		2
+#define SET_INIT()      __lfpd(max_vals)
+#define __m128t         __complex__ double
+#define SWIDTH          2
 #else
 #if (PRECISION==1)
-#define MAX_VAL		FLT_MAX
-#define LOAD		_mm_load_ps
-#define STORE		_mm_store_ps
-#define OUTER_OP	_mm_min_ps
-#define FUSED_OP(a,b,c)	_mm_min_ps(a,_mm_add_ps(c,b))
-//#define INNER_OP(a,b)	_mm_max_ps(b,_mm_max_ps(a,_mm_add_ps(a,b)))
-#define SET_INIT()	_mm_set1_ps(MAX_VAL)
-#define __m128t		__m128
-#define SWIDTH		4
+#define MAX_VAL         FLT_MAX
+#define LOAD            _mm_load_ps
+#define STORE           _mm_store_ps
+#define OUTER_OP        _mm_min_ps
+#define FUSED_OP(a,b,c) _mm_min_ps(a,_mm_add_ps(c,b))
+//#define INNER_OP(a,b) _mm_max_ps(b,_mm_max_ps(a,_mm_add_ps(a,b)))
+#define SET_INIT()      _mm_set1_ps(MAX_VAL)
+#define __m128t         __m128
+#define SWIDTH          4
 #endif
 
 #if (PRECISION==2)
-#define MAX_VAL		DBL_MAX
-#define LOAD		_mm_load_pd
-#define STORE		_mm_store_pd
-#define OUTER_OP	_mm_min_pd
-#define FUSED_OP(a,b,c)	_mm_min_pd(a,_mm_add_pd(b,c))
-//#define INNER_OP(a,b)	_mm_max_pd(b,_mm_max_pd(a,_mm_add_pd(a,b)))
-//#define INNER_OP(a,b)	_mm_add_pd(a,b)
-#define SET_INIT()	_mm_set1_pd(MAX_VAL)
-#define __m128t		__m128d
-#define SWIDTH		2
+#define MAX_VAL         DBL_MAX
+#define LOAD            _mm_load_pd
+#define STORE           _mm_store_pd
+#define OUTER_OP        _mm_min_pd
+#define FUSED_OP(a,b,c) _mm_min_pd(a,_mm_add_pd(b,c))
+//#define INNER_OP(a,b) _mm_max_pd(b,_mm_max_pd(a,_mm_add_pd(a,b)))
+//#define INNER_OP(a,b) _mm_add_pd(a,b)
+#define SET_INIT()      _mm_set1_pd(MAX_VAL)
+#define __m128t         __m128d
+#define SWIDTH          2
 #endif
 #endif
 
@@ -412,9 +412,9 @@ __complex__ double stripe_vals;
 
 
 inline static void blk_transp(REAL * block,
-			      REAL * new_block,
-			      int const nrow,
-			      int const ncol){
+                              REAL * new_block,
+                              int const nrow,
+                              int const ncol){
   for (int i = 0; i < ncol; i++){
     for (int j = 0; j < nrow; j++){
       new_block[i*nrow+j]=block[j*ncol+i];
@@ -427,15 +427,15 @@ inline static void blk_transp(REAL * block,
 #pragma safeptr=all
 #endif
 inline static void do_block(int const ldm, 
-			    int const ldn,
-			    int const ldk,
-			    int const M, 
-			    int const N, 
-			    int const K, 
-			    REAL const *A, 
-			    REAL const *B,
-			    REAL *  C,
-			    int const full_KN){
+                            int const ldn,
+                            int const ldk,
+                            int const M, 
+                            int const N, 
+                            int const K, 
+                            REAL const *A, 
+                            REAL const *B,
+                            REAL *  C,
+                            int const full_KN){
 //  TAU_FSTART(do_block);
 
 
@@ -458,64 +458,64 @@ inline static void do_block(int const ldm,
       #pragma unroll
 #endif
       for (j = 0; j < nn; j+= RBN){
-	LOAD_C;
+        LOAD_C;
 #ifndef BGP
-	#pragma unroll BLOCK_SIZE_K/RBK
+        #pragma unroll BLOCK_SIZE_K/RBK
 #else
       #pragma unroll
 #endif
-	for (k = 0; k < BLOCK_SIZE_K; k+= RBK){
-	  LOAD_A;
-	  LOAD_B;
-	  MUL_A_B;
-	}
-	STORE_C;
+        for (k = 0; k < BLOCK_SIZE_K; k+= RBK){
+          LOAD_A;
+          LOAD_B;
+          MUL_A_B;
+        }
+        STORE_C;
       }
     }
   } else if (full_KN == 2){
     for (i = 0; i < mm; i+= RBM){
       for (j = 0; j < nn; j+= RBN){
-	LOAD_C;
+        LOAD_C;
 #ifndef BGP
-	#pragma unroll BLOCK_SIZE_K/RBK
+        #pragma unroll BLOCK_SIZE_K/RBK
 #else
       #pragma unroll
 #endif
-	for (k = 0; k < BLOCK_SIZE_K; k+= RBK){
-	  LOAD_A;
-	  LOAD_B;
-	  MUL_A_B;
-	}
-	STORE_C;
+        for (k = 0; k < BLOCK_SIZE_K; k+= RBK){
+          LOAD_A;
+          LOAD_B;
+          MUL_A_B;
+        }
+        STORE_C;
       }
     }
   } else{
     for (i = 0; i < mm; i+= RBM){
       for (j = 0; j < nn; j+= RBN){
-	LOAD_C;
+        LOAD_C;
 #ifndef BGP
-	#pragma unroll
+        #pragma unroll
 #else
       #pragma unroll
 #endif
-	for (k = 0; k < kk; k+= RBK){
-	  LOAD_A;
-	  LOAD_B;
-	  MUL_A_B;
-	}
-	STORE_C;
+        for (k = 0; k < kk; k+= RBK){
+          LOAD_A;
+          LOAD_B;
+          MUL_A_B;
+        }
+        STORE_C;
       }
     }
   }
 //  TAU_FSTOP(do_block);
 }
 
-void fmm_opt( 	const char trans_A,	const char trans_B,
-		const int m,		const int n,		const int k,		
-		const REAL * A,		const int lda_A,
-		const REAL * B,		const int lda_B,
-		      REAL * C,		const int lda_C,
-		const int * pred_A,	int * pred_C,		const int lda_P){
+void fmm_opt(   const char trans_A,     const char trans_B,
+                const int m,            const int n,            const int k,            
+                const REAL * A,         const int lda_A,
+                const REAL * B,         const int lda_B,
+                      REAL * C,         const int lda_C,
+                const int * pred_A,     int * pred_C,           const int lda_P){
   int mpad, npad, kpad;
   TAU_FSTART(fmm_opt);
   mpad = m, npad = n, kpad = k;
@@ -544,36 +544,36 @@ void fmm_opt( 	const char trans_A,	const char trans_B,
     REAL pad_C[mpad*npad] __attribute__ ((aligned(16)));
     if (trans_A == 'n' || trans_A == 'N'){
       for (int i=0; i<k; i++){
-	memcpy(pad_A+i*mpad, A+i*lda_A, m*sizeof(REAL));
-	std::fill(pad_A+i*mpad+m, pad_A+(i+1)*mpad, inf);
+        memcpy(pad_A+i*mpad, A+i*lda_A, m*sizeof(REAL));
+        std::fill(pad_A+i*mpad+m, pad_A+(i+1)*mpad, inf);
       }
       for (int i=k; i<kpad; i++){
-	std::fill(pad_A+i*mpad, pad_A+(i+1)*mpad, inf);
+        std::fill(pad_A+i*mpad, pad_A+(i+1)*mpad, inf);
       }
     } else {
       for (int i=0; i<m; i++){
-	memcpy(pad_A+i*kpad, A+i*lda_A, k*sizeof(REAL));
-	std::fill(pad_A+i*kpad+k, pad_A+(i+1)*kpad, inf);
+        memcpy(pad_A+i*kpad, A+i*lda_A, k*sizeof(REAL));
+        std::fill(pad_A+i*kpad+k, pad_A+(i+1)*kpad, inf);
       }
       for (int i=m; i<mpad; i++){
-	std::fill(pad_A+i*kpad, pad_A+(i+1)*kpad, inf);
+        std::fill(pad_A+i*kpad, pad_A+(i+1)*kpad, inf);
       }
     }
     if (trans_B == 'n' || trans_B == 'N'){
       for (int i=0; i<n; i++){
-	memcpy(pad_B+i*kpad, B+i*lda_B, k*sizeof(REAL));
-	std::fill(pad_B+i*kpad+k, pad_B+(i+1)*kpad, inf);
+        memcpy(pad_B+i*kpad, B+i*lda_B, k*sizeof(REAL));
+        std::fill(pad_B+i*kpad+k, pad_B+(i+1)*kpad, inf);
       }
       for (int i=n; i<npad; i++){
-	std::fill(pad_B+i*kpad, pad_B+(i+1)*kpad, inf);
+        std::fill(pad_B+i*kpad, pad_B+(i+1)*kpad, inf);
       }
     } else {
       for (int i=0; i<k; i++){
-	memcpy(pad_B+i*npad, B+i*lda_B, n*sizeof(REAL));
-	std::fill(pad_B+i*npad+n, pad_B+(i+1)*npad, inf);
+        memcpy(pad_B+i*npad, B+i*lda_B, n*sizeof(REAL));
+        std::fill(pad_B+i*npad+n, pad_B+(i+1)*npad, inf);
       }
       for (int i=k; i<kpad; i++){
-	std::fill(pad_B+i*npad, pad_B+(i+1)*npad, inf);
+        std::fill(pad_B+i*npad, pad_B+(i+1)*npad, inf);
       }
     }
     for (int i=0; i<n; i++){
@@ -586,15 +586,15 @@ void fmm_opt( 	const char trans_A,	const char trans_B,
     {
       REAL A_swap[kpad*mpad] __attribute__ ((aligned(16)));
       if (trans_A == 'n' || trans_A == 'N'){ 
-	blk_transp(pad_A, A_swap, kpad, mpad);
-	memcpy(pad_A, A_swap, mpad*kpad*sizeof(REAL));
+        blk_transp(pad_A, A_swap, kpad, mpad);
+        memcpy(pad_A, A_swap, mpad*kpad*sizeof(REAL));
       }
     }
     {
       REAL B_swap[npad*kpad] __attribute__ ((aligned(16)));
       if (trans_B == 't' || trans_B == 'T'){
-	blk_transp(pad_B, B_swap, kpad, npad);
-	memcpy(pad_B, B_swap, npad*kpad*sizeof(REAL));
+        blk_transp(pad_B, B_swap, kpad, npad);
+        memcpy(pad_B, B_swap, npad*kpad*sizeof(REAL));
       }
     }
     {
@@ -614,35 +614,35 @@ void fmm_opt( 	const char trans_A,	const char trans_B,
     {
 #endif
       for( int i2 = 0; i2 < mpad; i2 += L2M ) {
-	for( int j2 = 0; j2 < npad; j2 += L2N ) {
-	  for( int k2 = 0; k2 < kpad; k2 += L2K ) {
+        for( int j2 = 0; j2 < npad; j2 += L2N ) {
+          for( int k2 = 0; k2 < kpad; k2 += L2K ) {
 #if THREADED
-	    for( int i = i2 + tidm*BLOCK_SIZE_M; i < MIN(mpad,i2+L2M); i += TBLKM*BLOCK_SIZE_M ) {
-	      for( int j = j2 + tidn*BLOCK_SIZE_N; j < MIN(npad,j2+L2N); j += TBLKN*BLOCK_SIZE_N ) {
+            for( int i = i2 + tidm*BLOCK_SIZE_M; i < MIN(mpad,i2+L2M); i += TBLKM*BLOCK_SIZE_M ) {
+              for( int j = j2 + tidn*BLOCK_SIZE_N; j < MIN(npad,j2+L2N); j += TBLKN*BLOCK_SIZE_N ) {
 #else
-	    for( int i = i2; i < MIN(mpad,i2+L2M); i += BLOCK_SIZE_M ) {
-	      for( int j = j2; j < MIN(npad,j2+L2N); j += BLOCK_SIZE_N ) {
+            for( int i = i2; i < MIN(mpad,i2+L2M); i += BLOCK_SIZE_M ) {
+              for( int j = j2; j < MIN(npad,j2+L2N); j += BLOCK_SIZE_N ) {
 #endif
-		for( int k = k2; k < MIN(kpad,k2+L2K); k += BLOCK_SIZE_K ) {
-		  /*This gets the correct block size (for fringe blocks also)*/
-		  int M = MIN( BLOCK_SIZE_M, mpad-i );
-		  int N = MIN( BLOCK_SIZE_N, npad-j );
-		  int K = MIN( BLOCK_SIZE_K, kpad-k );
+                for( int k = k2; k < MIN(kpad,k2+L2K); k += BLOCK_SIZE_K ) {
+                  /*This gets the correct block size (for fringe blocks also)*/
+                  int M = MIN( BLOCK_SIZE_M, mpad-i );
+                  int N = MIN( BLOCK_SIZE_N, npad-j );
+                  int K = MIN( BLOCK_SIZE_K, kpad-k );
 
-/*		  fmm_naive('T', 'N', M, N, K, 
-			    pad_A+k+i*kpad, kpad,
-			    pad_B+k+j*kpad, kpad,
-			    pad_C+i+j*mpad, mpad);*/
-		  
-		  do_block(mpad, npad, kpad, M, N, K, 
-			   pad_A+k+i*kpad, pad_B+k+j*kpad, pad_C+j+i*npad, 
-			   2*(K==BLOCK_SIZE_K)+(N==BLOCK_SIZE_N));
+/*                fmm_naive('T', 'N', M, N, K, 
+                            pad_A+k+i*kpad, kpad,
+                            pad_B+k+j*kpad, kpad,
+                            pad_C+i+j*mpad, mpad);*/
+                  
+                  do_block(mpad, npad, kpad, M, N, K, 
+                           pad_A+k+i*kpad, pad_B+k+j*kpad, pad_C+j+i*npad, 
+                           2*(K==BLOCK_SIZE_K)+(N==BLOCK_SIZE_N));
 
-		}
-	      }
-	    }
-	  }
-	}
+                }
+              }
+            }
+          }
+        }
       }
     }
     {
@@ -650,10 +650,10 @@ void fmm_opt( 	const char trans_A,	const char trans_B,
       REAL C_swap[npad*mpad] __attribute__ ((aligned(16)));
       blk_transp(pad_C, C_swap, mpad, npad);
       for (int i = 0; i<n; i++){
-	memcpy(C+i*lda_C,C_swap+i*mpad, m*sizeof(REAL));
+        memcpy(C+i*lda_C,C_swap+i*mpad, m*sizeof(REAL));
       }
 /*      for (int i=0; i<n; i++){
-	memcpy(C+i*lda_C,pad_C+i*mpad, m*sizeof(REAL));
+        memcpy(C+i*lda_C,pad_C+i*mpad, m*sizeof(REAL));
       }*/
     }
   } else {
@@ -663,22 +663,22 @@ void fmm_opt( 	const char trans_A,	const char trans_B,
     /*For each block combination*/
     for( int i2 = 0; i2 < lda; i2 += L2M ) {
       for( int j2 = 0; j2 < lda; j2 += L2N ) {
-	for( int k2 = 0; k2 < lda; k2 += L2K ) {
-	  for( int i = i2; i < MIN(lda,i2+L2M); i += BLOCK_SIZE_M ) {
-	    for( int j = j2; j < MIN(lda,j2+L2N); j += BLOCK_SIZE_N ) {
-	      for( int k = k2; k < MIN(lda,k2+L2K); k += BLOCK_SIZE_K ) {
-		/*This gets the correct block size (for fringe blocks also)*/
-		int M = MIN( BLOCK_SIZE_M, lda-i );
-		int N = MIN( BLOCK_SIZE_N, lda-j );
-		int K = MIN( BLOCK_SIZE_K, lda-k );
-		
-		do_block(lda, lda, lda, M, N, K, 
-			 A_swap+k+i*lda, B+k+j*lda, C+j+i*lda, 
-			 2*(K==BLOCK_SIZE_K)+(N==BLOCK_SIZE_N));
-	      }
-	    }
-	  }
-	}
+        for( int k2 = 0; k2 < lda; k2 += L2K ) {
+          for( int i = i2; i < MIN(lda,i2+L2M); i += BLOCK_SIZE_M ) {
+            for( int j = j2; j < MIN(lda,j2+L2N); j += BLOCK_SIZE_N ) {
+              for( int k = k2; k < MIN(lda,k2+L2K); k += BLOCK_SIZE_K ) {
+                /*This gets the correct block size (for fringe blocks also)*/
+                int M = MIN( BLOCK_SIZE_M, lda-i );
+                int N = MIN( BLOCK_SIZE_N, lda-j );
+                int K = MIN( BLOCK_SIZE_K, lda-k );
+                
+                do_block(lda, lda, lda, M, N, K, 
+                         A_swap+k+i*lda, B+k+j*lda, C+j+i*lda, 
+                         2*(K==BLOCK_SIZE_K)+(N==BLOCK_SIZE_N));
+              }
+            }
+          }
+        }
       }
     }
     //REAL A_swap[lda*lda];
@@ -689,4 +689,4 @@ void fmm_opt( 	const char trans_A,	const char trans_B,
 #endif
   }
   TAU_FSTOP(fmm_opt);
-}	
+}       
