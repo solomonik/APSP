@@ -1,0 +1,147 @@
+ModuleCmd_Switch.c(172):ERROR:152: Module 'openmpi' is currently not loaded
+ModuleCmd_Switch.c(172):ERROR:152: Module 'openmpi' is currently not loaded
+seed = 3, iter = 3, test = 0, b1 = 8, b2 =8, crep = 1,
+n = 4096, pdim = 64
+Benchmarking dcapsp.
+Completed 3 iterations of dcapsp.
+5.419224 seconds per iteration, 76.084114 Gigaflops (GF)
+Application 5530854 resources: utime ~21504s, stime ~3073s
+seed = 3, iter = 3, test = 0, b1 = 16, b2 =16, crep = 1,
+n = 8192, pdim = 64
+Benchmarking dcapsp.
+Completed 3 iterations of dcapsp.
+7.108685 seconds per iteration, 464.014776 Gigaflops (GF)
+Application 5530855 resources: utime ~28686s, stime ~3718s
+seed = 3, iter = 3, test = 0, b1 = 16, b2 =16, crep = 1,
+n = 16384, pdim = 64
+Benchmarking dcapsp.
+Completed 3 iterations of dcapsp.
+25.156866 seconds per iteration, 1048.949380 Gigaflops (GF)
+Application 5530857 resources: utime ~107106s, stime ~8220s
+seed = 3, iter = 3, test = 0, b1 = 32, b2 =32, crep = 1,
+n = 32768, pdim = 64
+Benchmarking dcapsp.
+Completed 3 iterations of dcapsp.
+67.046844 seconds per iteration, 3148.637876 Gigaflops (GF)
+Application 5530869 resources: utime ~320586s, stime ~10832s
+seed = 3, iter = 3, test = 0, b1 = 8, b2 =8, crep = 4,
+n = 4096, pdim = 32
+Benchmarking dcapsp.
+Completed 3 iterations of dcapsp.
+1.985314 seconds per iteration, 207.683461 Gigaflops (GF)
+Application 5530877 resources: utime ~8192s, stime ~1024s
+seed = 3, iter = 3, test = 0, b1 = 8, b2 =16, crep = 4,
+n = 8192, pdim = 32
+Benchmarking dcapsp.
+Completed 3 iterations of dcapsp.
+5.207170 seconds per iteration, 633.460186 Gigaflops (GF)
+Application 5530878 resources: utime ~22432s, stime ~1158s
+seed = 3, iter = 3, test = 0, b1 = 16, b2 =16, crep = 4,
+n = 16384, pdim = 32
+Benchmarking dcapsp.
+Completed 3 iterations of dcapsp.
+10.027252 seconds per iteration, 2631.656128 Gigaflops (GF)
+Application 5530880 resources: utime ~47971s, stime ~2115s
+seed = 3, iter = 3, test = 0, b1 = 16, b2 =32, crep = 4,
+n = 32768, pdim = 32
+Benchmarking dcapsp.
+_pmiu_daemon(SIGCHLD): [NID 05361] [c7-0c0s7n1] [Tue Jan 31 15:24:20 2012] PE RANK 897 exit signal Segmentation fault
+[NID 05361] 2012-01-31 15:24:44 Apid 5530887: initiated application termination
+_pmiu_daemon(SIGCHLD): [NID 06108] [c3-0c2s1n0] [Tue Jan 31 15:24:20 2012] PE RANK 529 exit signal Segmentation fault
+Application 5530887 exit codes: 139
+Application 5530887 exit signals: Killed
+Application 5530887 resources: utime ~0s, stime ~0s
+seed = 3, iter = 3, test = 0, b1 = 8, b2 =16, crep = 16,
+n = 4096, pdim = 16
+Benchmarking dcapsp.
+Completed 3 iterations of dcapsp.
+0.939908 seconds per iteration, 438.677768 Gigaflops (GF)
+Application 5530888 resources: utime ~4096s, stime ~1024s
+seed = 3, iter = 3, test = 0, b1 = 16, b2 =16, crep = 16,
+n = 8192, pdim = 16
+Benchmarking dcapsp.
+Completed 3 iterations of dcapsp.
+2.933451 seconds per iteration, 1124.455446 Gigaflops (GF)
+Application 5530889 resources: utime ~13312s, stime ~1024s
+seed = 3, iter = 3, test = 0, b1 = 16, b2 =32, crep = 16,
+n = 16384, pdim = 16
+Benchmarking dcapsp.
+_pmiu_daemon(SIGCHLD): [NID 06224] [c1-0c0s7n2] [Tue Jan 31 15:24:36 2012] PE RANK 169 exit signal Segmentation fault
+_pmiu_daemon(SIGCHLD): [NID 00015] [c0-0c0s7n1] [Tue Jan 31 15:24:36 2012] PE RANK 205 exit signal Segmentation fault
+_pmiu_daemon(SIGCHLD): [NID 06130] [c3-0c0s6n0] [Tue Jan 31 15:24:36 2012] PE RANK 129 exit signal Segmentation fault
+_pmiu_daemon(SIGCHLD): [NID 05387] [c5-0c0s5n1] [Tue Jan 31 15:24:36 2012] PE RANK 53 exit signal Segmentation fault
+_pmiu_daemon(SIGCHLD): [NID 06055] [c3-0c0s3n3] [Tue Jan 31 15:24:36 2012] PE RANK 5 exit signal Segmentation fault
+[NID 06055] 2012-01-31 15:25:00 Apid 5530890: initiated application termination
+_pmiu_daemon(SIGCHLD): [NID 06163] [c1-0c1s6n1] [Tue Jan 31 15:24:36 2012] PE RANK 245 exit signal Segmentation fault
+_pmiu_daemon(SIGCHLD): [NID 00018] [c0-0c1s6n0] [Tue Jan 31 15:24:36 2012] PE RANK 233 exit signal Segmentation fault
+_pmiu_daemon(SIGCHLD): [NID 00082] [c0-0c0s6n2] [Tue Jan 31 15:24:36 2012] PE RANK 185 exit signal Segmentation fault
+_pmiu_daemon(SIGCHLD): [NID 00076] [c0-0c1s6n2] [Tue Jan 31 15:24:36 2012] PE RANK 225 exit signal Segmentation fault
+_pmiu_daemon(SIGCHLD): [NID 06061] [c3-0c0s6n3] [Tue Jan 31 15:24:36 2012] PE RANK 143 exit signal Segmentation fault
+_pmiu_daemon(SIGCHLD): [NID 00019] [c0-0c1s6n1] [Tue Jan 31 15:24:36 2012] PE RANK 239 exit signal Segmentation fault
+_pmiu_daemon(SIGCHLD): [NID 06227] [c1-0c0s6n3] [Tue Jan 31 15:24:36 2012] PE RANK 151 exit signal Segmentation fault
+_pmiu_daemon(SIGCHLD): [NID 00078] [c0-0c1s7n2] [Tue Jan 31 15:24:36 2012] PE RANK 219 exit signal Segmentation fault
+_pmiu_daemon(SIGCHLD): [NID 00013] [c0-0c0s6n1] [Tue Jan 31 15:24:36 2012] PE RANK 199 exit signal Segmentation fault
+_pmiu_daemon(SIGCHLD): [NID 00080] [c0-0c0s7n2] [Tue Jan 31 15:24:36 2012] PE RANK 179 exit signal Segmentation fault
+_pmiu_daemon(SIGCHLD): [NID 00016] [c0-0c1s7n0] [Tue Jan 31 15:24:36 2012] PE RANK 209 exit signal Segmentation fault
+_pmiu_daemon(SIGCHLD): [NID 06225] [c1-0c0s7n3] [Tue Jan 31 15:24:36 2012] PE RANK 172 exit signal Segmentation fault
+_pmiu_daemon(SIGCHLD): [NID 06060] [c3-0c0s6n2] [Tue Jan 31 15:24:36 2012] PE RANK 138 exit signal Segmentation fault
+_pmiu_daemon(SIGCHLD): [NID 06160] [c1-0c1s7n0] [Tue Jan 31 15:24:36 2012] PE RANK 251 exit signal Segmentation fault
+_pmiu_daemon(SIGCHLD): [NID 06128] [c3-0c0s7n0] [Tue Jan 31 15:24:36 2012] PE RANK 121 exit signal Segmentation fault
+_pmiu_daemon(SIGCHLD): [NID 05461] [c5-0c0s5n3] [Tue Jan 31 15:24:36 2012] PE RANK 77 exit signal Segmentation fault
+_pmiu_daemon(SIGCHLD): [NID 05462] [c5-0c0s4n2] [Tue Jan 31 15:24:36 2012] PE RANK 37 exit signal Segmentation fault
+_pmiu_daemon(SIGCHLD): [NID 05463] [c5-0c0s4n3] [Tue Jan 31 15:24:36 2012] PE RANK 41 exit signal Segmentation fault
+_pmiu_daemon(SIGCHLD): [NID 05459] [c5-0c0s6n3] [Tue Jan 31 15:24:36 2012] PE RANK 85 exit signal Segmentation fault
+_pmiu_daemon(SIGCHLD): [NID 05386] [c5-0c0s5n0] [Tue Jan 31 15:24:36 2012] PE RANK 49 exit signal Segmentation fault
+_pmiu_daemon(SIGCHLD): [NID 05457] [c5-0c0s7n3] [Tue Jan 31 15:24:36 2012] PE RANK 111 exit signal Segmentation fault
+_pmiu_daemon(SIGCHLD): [NID 06133] [c3-0c0s5n1] [Tue Jan 31 15:24:36 2012] PE RANK 63 exit signal Segmentation fault
+_pmiu_daemon(SIGCHLD): [NID 05391] [c5-0c0s7n1] [Tue Jan 31 15:24:36 2012] PE RANK 103 exit signal Segmentation fault
+_pmiu_daemon(SIGCHLD): [NID 06153] [c1-0c0s4n1] [Tue Jan 31 15:24:36 2012] PE RANK 35 exit signal Segmentation fault
+_pmiu_daemon(SIGCHLD): [NID 05389] [c5-0c0s6n1] [Tue Jan 31 15:24:36 2012] PE RANK 95 exit signal Segmentation fault
+_pmiu_daemon(SIGCHLD): [NID 06138] [c3-0c0s2n0] [Tue Jan 31 15:24:36 2012] PE RANK 19 exit signal Segmentation fault
+_pmiu_daemon(SIGCHLD): [NID 05388] [c5-0c0s6n0] [Tue Jan 31 15:24:36 2012] PE RANK 91 exit signal Segmentation fault
+_pmiu_daemon(SIGCHLD): [NID 06052] [c3-0c0s2n2] [Tue Jan 31 15:24:36 2012] PE RANK 27 exit signal Segmentation fault
+_pmiu_daemon(SIGCHLD): [NID 05460] [c5-0c0s5n2] [Tue Jan 31 15:24:36 2012] PE RANK 72 exit signal Segmentation fault
+_pmiu_daemon(SIGCHLD): [NID 06058] [c3-0c0s5n2] [Tue Jan 31 15:24:36 2012] PE RANK 67 exit signal Segmentation fault
+_pmiu_daemon(SIGCHLD): [NID 06059] [c3-0c0s5n3] [Tue Jan 31 15:24:36 2012] PE RANK 71 exit signal Segmentation fault
+_pmiu_daemon(SIGCHLD): [NID 00083] [c0-0c0s6n3] [Tue Jan 31 15:24:36 2012] PE RANK 191 exit signal Segmentation fault
+_pmiu_daemon(SIGCHLD): [NID 06063] [c3-0c0s7n3] [Tue Jan 31 15:24:36 2012] PE RANK 119 exit signal Segmentation fault
+_pmiu_daemon(SIGCHLD): [NID 06062] [c3-0c0s7n2] [Tue Jan 31 15:24:36 2012] PE RANK 115 exit signal Segmentation fault
+_pmiu_daemon(SIGCHLD): [NID 05456] [c5-0c0s7n2] [Tue Jan 31 15:24:36 2012] PE RANK 105 exit signal Segmentation fault
+_pmiu_daemon(SIGCHLD): [NID 05390] [c5-0c0s7n0] [Tue Jan 31 15:24:36 2012] PE RANK 96 exit signal Segmentation fault
+_pmiu_daemon(SIGCHLD): [NID 00077] [c0-0c1s6n3] [Tue Jan 31 15:24:36 2012] PE RANK 228 exit signal Segmentation fault
+_pmiu_daemon(SIGCHLD): [NID 00081] [c0-0c0s7n3] [Tue Jan 31 15:24:36 2012] PE RANK 183 exit signal Segmentation fault
+Application 5530890 exit codes: 139
+Application 5530890 exit signals: Killed
+Application 5530890 resources: utime ~0s, stime ~0s
+seed = 3, iter = 3, test = 0, b1 = 32, b2 =32, crep = 1,
+n = 65536, pdim = 64
+Benchmarking dcapsp.
+_pmiu_daemon(SIGCHLD): [NID 02047] [c10-3c1s0n3] [Tue Jan 31 15:24:41 2012] PE RANK 1710 exit signal Segmentation fault
+_pmiu_daemon(SIGCHLD): [NID 03264] [c16-3c0s0n0] [Tue Jan 31 15:24:41 2012] PE RANK 1136 exit signal Segmentation fault
+[NID 03264] 2012-01-31 15:25:05 Apid 5530891: initiated application termination
+_pmiu_daemon(SIGCHLD): [NID 00587] [c2-2c2s5n3] [Tue Jan 31 15:24:41 2012] PE RANK 3728 exit signal Segmentation fault
+_pmiu_daemon(SIGCHLD): [NID 03354] [c16-3c0s2n2] [Tue Jan 31 15:24:41 2012] PE RANK 1363 exit signal Segmentation fault
+_pmiu_daemon(SIGCHLD): [NID 00663] [c2-2c2s4n1] [Tue Jan 31 15:24:41 2012] PE RANK 3699 exit signal Segmentation fault
+_pmiu_daemon(SIGCHLD): [NID 00770] [c4-0c0s1n0] [Tue Jan 31 15:24:41 2012] PE RANK 2712 exit signal Segmentation fault
+_pmiu_daemon(SIGCHLD): [NID 02815] [c14-3c1s0n3] [Tue Jan 31 15:24:41 2012] PE RANK 1775 exit signal Segmentation fault
+Application 5530891 exit codes: 139
+Application 5530891 exit signals: Killed
+Application 5530891 resources: utime ~0s, stime ~0s
+
+ + --------------------------------------------------------------------------
+ +        Job name: script4096_notau.sh
+ +          Job Id: 1225201.sdb
+ +          System: hopper
+ +     Queued Time: Tue Jan 31 11:16:14 2012
+ +      Start Time: Tue Jan 31 15:22:01 2012
+ + Completion Time: Tue Jan 31 15:25:06 2012
+ +            User: abuluc
+ +        MOM Host: nid05416
+ +           Queue: reg_med
+ +  Req. Resources: other=QSUBPID:26272:hopper06,walltime=00:20:00
+ +  Used Resources: cput=00:00:03,mem=5816kb,vmem=40052kb,walltime=00:03:05
+ +     Acct String: m888
+ +   PBS_O_WORKDIR: /global/homes/a/abuluc/apsp-25d/code/apsp
+ +     Submit Args: script4096_notau.sh
+ + --------------------------------------------------------------------------
+
