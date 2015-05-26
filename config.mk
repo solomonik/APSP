@@ -1,9 +1,8 @@
-CC	= CC
-CXX	= CC
-#CFLAGS  = -g -O0 $(DFLAGS)
+CC	= mpicxx
+CXX	= mpicxx
 OPENMP = -fopenmp
-CFLAGS = -O4 -DUSE_OMP -DHOPPER $(DFLAGS) $(OPENMP)
-LIBS    = $(OPENMP) 
+CFLAGS = -O3 -DUSE_OMP -DHOPPER $(DFLAGS) $(OPENMP)
+LIBS    = $(OPENMP)  -lblas
 
 ifneq (,$(findstring DTAU,$(CFLAGS)))
         include  $(TAUROOTDIR)/include/Makefile
